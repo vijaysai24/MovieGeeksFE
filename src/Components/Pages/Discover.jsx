@@ -79,7 +79,7 @@ function Discover({ preset }) {
   const { data: genres = [] } = useGenres();
   const { data: languages = [] } = useLanguages();
 
-  const mediaType = params.get("type") || presetConfig?.type || localStorage.getItem("mg:prefers") || "movie";
+  const mediaType = params.get("type") || presetConfig?.type || localStorage.getItem("cf:prefers") || "movie";
   const tabs = TABS[mediaType] || TABS.movie;
   const tab = tabs.find((item) => item.value === (params.get("list") || presetConfig?.list)) || tabs[0];
   const { data: providers = [] } = useProviders(mediaType, region);

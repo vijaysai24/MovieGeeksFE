@@ -1,8 +1,8 @@
 import { useSyncExternalStore } from "react";
 
 // A guest's wishlist lives in this browser until they sign in, when it is merged into the account.
-const KEY = "mg:guest-wishlist";
-const EVENT = "mg:guest-wishlist";
+const KEY = "cf:guest-wishlist";
+const EVENT = "cf:guest-wishlist";
 const LIMIT = 100;
 
 let cache = null;

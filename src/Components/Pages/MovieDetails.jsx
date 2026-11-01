@@ -111,7 +111,7 @@ function Ratings({ title }) {
                 <span className="text-base text-faint"> /10</span>
               </p>
               <h3 className="mt-1 text-lg font-medium text-ink">
-                Movie Geeks members <span className="num text-base font-normal text-faint">· {plural(community.ratingCount, "rating")}</span>
+                Cinefile members <span className="num text-base font-normal text-faint">· {plural(community.ratingCount, "rating")}</span>
               </h3>
               <div className="mt-5 flex h-20 items-end gap-1" role="img" aria-label={`Rating spread: ${community.distribution.map((bin) => `${bin.count} gave ${bin.rating}`).join(", ")}`}>
                 {community.distribution.map((bin) => (
@@ -124,7 +124,7 @@ function Ratings({ title }) {
             </>
           ) : (
             <>
-              <h3 className="text-lg font-medium text-ink">Movie Geeks members</h3>
+              <h3 className="text-lg font-medium text-ink">Cinefile members</h3>
               <p className="mt-2 text-base text-muted">No member has rated it yet. Yours would be the first.</p>
             </>
           )}
@@ -315,9 +315,9 @@ function TitleDetails({ mediaType }) {
   const stage = useStageSection(Boolean(title));
 
   useEffect(() => {
-    if (title) document.title = `${title.title}${title.year ? ` (${title.year})` : ""} · Movie Geeks`;
+    if (title) document.title = `${title.title}${title.year ? ` (${title.year})` : ""} · Cinefile`;
     return () => {
-      document.title = "Movie Geeks";
+      document.title = "Cinefile";
     };
   }, [title]);
 

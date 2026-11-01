@@ -91,7 +91,7 @@ export const errorMessage = (err, fallback = "Something went wrong. Please try a
   if (data?.errors?.length) return data.errors[0].msg;
   if (data?.message) return data.message;
   if (err?.code === "ECONNABORTED" || err?.message === "Network Error") {
-    return "Can't reach Movie Geeks right now. Check your connection.";
+    return "Can't reach Cinefile right now. Check your connection.";
   }
   return fallback;
 };

@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Movie Geeks design tokens.
+/* Cinefile design tokens.
    Ground is true black; surfaces step up by lightness alone (no shadows or borders at rest).
    Amber is the one hue: it marks data (ratings, the member score) and the page's main action,
    never navigation or tabs. Boska sets film titles and page headings; Inter sets everything else. */

@@ -45,14 +45,14 @@ function Register() {
     setSubmitting(true);
     setError(null);
     try {
-      if (params.get("prefers")) localStorage.setItem("mg:prefers", params.get("prefers"));
+      if (params.get("prefers")) localStorage.setItem("cf:prefers", params.get("prefers"));
       const { user, merged } = await register({
         name: form.name.trim(),
         email: form.email.trim(),
         password: form.password,
         ...(form.username && { username: form.username }),
       });
-      toast.show(merged?.added ? `Welcome, ${user.name.split(" ")[0]}. ${merged.added} saved titles are on your wishlist.` : `Welcome to Movie Geeks, ${user.name.split(" ")[0]}`);
+      toast.show(merged?.added ? `Welcome, ${user.name.split(" ")[0]}. ${merged.added} saved titles are on your wishlist.` : `Welcome to Cinefile, ${user.name.split(" ")[0]}`);
       navigate(location.state?.from?.pathname || `/u/${user.username}`, { replace: true });
     } catch (err) {
       const code = errorCode(err);

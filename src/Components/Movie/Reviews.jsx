@@ -344,7 +344,7 @@ export function TitleReviews({ title, viewerState }) {
           </Button>
         )}
       </div>
-      <p className="mt-2 text-sm text-faint">{total ? `${plural(total, "review")} from Movie Geeks members` : "From Movie Geeks members"}</p>
+      <p className="mt-2 text-sm text-faint">{total ? `${plural(total, "review")} from Cinefile members` : "From Cinefile members"}</p>
 
       {composing && (
         <div className="mt-6">

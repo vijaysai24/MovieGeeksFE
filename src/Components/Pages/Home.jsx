@@ -60,7 +60,7 @@ function Home() {
 
       {home.isError && (
         <div className="mx-auto max-w-[1440px] px-4 pt-8 md:px-8">
-          <ErrorState message="Today's listings didn't load. The rest of Movie Geeks still works." onRetry={() => home.refetch()} />
+          <ErrorState message="Today's listings didn't load. The rest of Cinefile still works." onRetry={() => home.refetch()} />
         </div>
       )}
 

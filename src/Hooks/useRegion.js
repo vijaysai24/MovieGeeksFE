@@ -2,8 +2,8 @@ import { useCallback, useSyncExternalStore } from "react";
 import { useAuth } from "../Context/AuthContext";
 import { profileApi } from "../Services/userService";
 
-const KEY = "mg:region";
-const EVENT = "mg:region";
+const KEY = "cf:region";
+const EVENT = "cf:region";
 const DEFAULT_REGION = "IN";
 
 const readGuestRegion = () => {
