@@ -1,323 +1,336 @@
 import { useState } from "react";
-import {
-    FaStar,
-    FaFilm,
-    FaBookmark,
-    FaQuoteLeft,
-    FaHeart,
-    FaUserTag,
-    FaVideo,
-    FaFire,
-    FaRegCheckCircle,
-} from "react-icons/fa";
+import { Link, useParams } from "react-router-dom";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { socialApi } from "../../Services/userService";
+import { errorMessage } from "../../Services/api";
+import { backdropSrcSet, tmdbImage, titleHref } from "../../Services/images";
+import { formatDate, formatNumber, plural, timeAgo } from "../../Services/format";
+import { useAuth } from "../../Context/AuthContext";
+import { useToast } from "../../Context/ToastContext";
+import { Avatar } from "../UI/Avatar";
+import { Button, LinkButton } from "../UI/Button";
+import { Dialog } from "../UI/Dialog";
+import { EmptyState, ErrorState, Skeleton, SkeletonText } from "../UI/States";
+import { RatingValue } from "../UI/RatingInput";
+import { Reveal } from "../UI/Reveal";
+import { Poster, PosterCard } from "../Movie/PosterCard";
+import { ReviewCard } from "../Movie/Reviews";
+import { TopFiveEditor } from "../Movie/TopFiveEditor";
+
+function SectionHeading({ id, children, action }) {
+  return (
+    <div className="flex items-end justify-between gap-4">
+      <h2 id={id} className="display text-[clamp(2rem,2.6vw,2.5rem)] text-ink">{children}</h2>
+      {action}
+    </div>
+  );
+}
+
+function ConnectionsDialog({ username, direction, onClose }) {
+  const query = useInfiniteQuery({
+    queryKey: ["profile", username, direction],
+    queryFn: ({ pageParam }) => socialApi.profileList(username, direction, { page: pageParam, limit: 30 }),
+    initialPageParam: 1,
+    getNextPageParam: (last) => (last.page < last.totalPages ? last.page + 1 : undefined),
+  });
+  const people = query.data?.pages.flatMap((page) => page.items) || [];
+
+  return (
+    <Dialog open onClose={onClose} title={direction === "followers" ? "Followers" : "Following"} size="sm">
+      {query.isLoading && <Skeleton className="h-24 w-full" />}
+      {query.isSuccess && !people.length && <p className="text-sm text-muted">{direction === "followers" ? "No followers yet." : "Not following anyone yet."}</p>}
+      <ul className="-mx-2 max-h-[60vh] overflow-y-auto">
+        {people.map((person) => (
+          <li key={person.id}>
+            <Link to={`/u/${person.username}`} onClick={onClose} className="flex items-center gap-3 rounded-lg px-2 py-2.5 hover:bg-raised">
+              <Avatar user={person} size="md" />
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-medium text-ink">{person.name}</span>
+                <span className="block truncate text-[13px] text-faint">@{person.username}</span>
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+      {query.hasNextPage && <Button variant="secondary" full className="mt-3" onClick={() => query.fetchNextPage()}>More</Button>}
+    </Dialog>
+  );
+}
+
+function TheirFive({ profile, onEdit }) {
+  const five = profile.topFive;
+  const owner = profile.isSelf ? "Your" : `${profile.user.name.split(" ")[0]}'s`;
+
+  return (
+    <section aria-labelledby="five-title" className="mt-[clamp(112px,9vw,136px)]">
+      <SectionHeading id="five-title" action={profile.isSelf && <Button variant="secondary" size="sm" onClick={onEdit}>{five.length ? "Change" : "Choose"}</Button>}>
+        {owner} five
+      </SectionHeading>
+      {five.length ? (
+        <Reveal index={1}>
+          <ol className="mt-6 grid grid-cols-3 gap-3 sm:grid-cols-5">
+            {five.map((title) => (
+              <li key={`${title.mediaType}:${title.id}`}>
+                <Link to={titleHref(title)} className="group block">
+                  <span className="block overflow-hidden rounded-[4px]">
+                    <Poster path={title.posterPath} title={title.title} sizes="(min-width: 768px) 120px, 30vw" className="transition-transform duration-500 group-hover:scale-[1.04]" />
+                  </span>
+                  <span className="mt-2 block truncate text-[13px] text-muted group-hover:text-ink">{title.title}</span>
+                </Link>
+              </li>
+            ))}
+          </ol>
+        </Reveal>
+      ) : (
+        <p className="mt-4 text-[15px] text-muted">
+          {profile.isSelf ? "Pick the five films or series that say the most about you. They open your profile." : "Hasn't picked their five yet."}
+        </p>
+      )}
+    </section>
+  );
+}
+
+function RecentDiary({ username, isSelf }) {
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ["profile", username, "diary", "recent"],
+    queryFn: () => socialApi.profileList(username, "diary", { limit: 6 }),
+  });
+
+  return (
+    <section aria-labelledby="diary-title" className="mt-[clamp(112px,9vw,136px)]">
+      <SectionHeading id="diary-title" action={isSelf && <Link to="/diary" className="text-sm text-muted hover:text-ink">Open diary</Link>}>
+        Lately
+      </SectionHeading>
+      {isLoading && <SkeletonText className="mt-6" lines={4} />}
+      {isError && <ErrorState className="mt-6" message="The diary didn't load." onRetry={refetch} />}
+      {data && !data.items.length && <p className="mt-4 text-[15px] text-muted">{isSelf ? "Log a film from its page and it appears here." : "Nothing logged yet."}</p>}
+      {data?.items.length > 0 && (
+        <ul className="mt-6 space-y-1">
+          {data.items.map((entry) => (
+            <li key={entry.id}>
+              <Link to={titleHref(entry.title)} className="group flex items-center gap-4 rounded-lg py-2">
+                <span className="num w-16 flex-none text-[13px] text-faint">{formatDate(entry.watchedOn).replace(/ \d{4}$/, "")}</span>
+                <span className="w-8 flex-none overflow-hidden rounded-[2px]"><Poster path={entry.title.posterPath} title={entry.title.title} sizes="32px" /></span>
+                <span className="min-w-0 flex-1 truncate text-[15px] text-ink group-hover:text-accent">
+                  {entry.title.title}
+                  {entry.isRewatch && <span className="ml-2 text-[13px] text-faint">rewatch</span>}
+                </span>
+                <RatingValue value={entry.rating} className="flex-none text-sm" />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+      {data?.totalRecords > 6 && <p className="num mt-3 text-[13px] text-faint">{plural(data.totalRecords, "entry", "entries")} in all</p>}
+    </section>
+  );
+}
+
+function RecentReviews({ username, name, isSelf }) {
+  const { data, isLoading } = useQuery({
+    queryKey: ["reviews", "user", username],
+    queryFn: () => socialApi.profileList(username, "reviews", { limit: 3 }),
+  });
+  if (isLoading) return <Skeleton className="mt-16 h-40 w-full" />;
+  if (!data?.items.length) return null;
+
+  return (
+    <section aria-labelledby="reviews-title" className="mt-[clamp(112px,9vw,136px)]">
+      <SectionHeading id="reviews-title">{isSelf ? "Your reviews" : `${name.split(" ")[0]}'s reviews`}</SectionHeading>
+      <div>{data.items.map((review) => <ReviewCard key={review.id} review={review} showTitle />)}</div>
+      {data.totalRecords > 3 && <p className="num text-[13px] text-faint">{plural(data.totalRecords, "review")} in all</p>}
+    </section>
+  );
+}
+
+function Favourites({ username }) {
+  const { data } = useQuery({
+    queryKey: ["profile", username, "favorites"],
+    queryFn: () => socialApi.profileList(username, "favorites", { limit: 12 }),
+  });
+  if (!data?.items.length) return null;
+
+  return (
+    <section aria-labelledby="favourites-title" className="mt-[clamp(112px,9vw,136px)]">
+      <SectionHeading id="favourites-title">Favourites</SectionHeading>
+      <div className="mt-6 grid grid-cols-3 gap-x-3 gap-y-6 sm:grid-cols-4">
+        {data.items.map((title) => <PosterCard key={`${title.mediaType}:${title.id}`} item={title} sizes="140px" userRating={title.userRating} />)}
+      </div>
+    </section>
+  );
+}
+
+const ACTIVITY_VERBS = {
+  RATED: "rated",
+  REVIEWED: "reviewed",
+  WATCHED: "watched",
+  FAVORITED: "added to favourites",
+  LISTED: "made a list",
+  FOLLOWED: "followed",
+};
+
+function Activity({ username }) {
+  const { data } = useQuery({
+    queryKey: ["profile", username, "activity"],
+    queryFn: () => socialApi.profileList(username, "activity", { limit: 8 }),
+  });
+  if (!data?.items.length) return null;
+
+  return (
+    <section aria-labelledby="activity-title" className="mt-[clamp(112px,9vw,136px)]">
+      <SectionHeading id="activity-title">Recent activity</SectionHeading>
+      <ul className="mt-6 space-y-3">
+        {data.items.map((item) => (
+          <li key={item.id} className="flex items-baseline justify-between gap-4 text-[15px]">
+            <span className="min-w-0 text-muted">
+              {ACTIVITY_VERBS[item.type]}{" "}
+              {item.title && <Link to={titleHref(item.title)} className="text-ink hover:text-accent">{item.title.title}</Link>}
+              {item.followed && <Link to={`/u/${item.followed.username}`} className="text-ink hover:text-accent">{item.followed.name}</Link>}
+              {item.rating && <span className="num text-accent"> {item.rating} /10</span>}
+            </span>
+            <span className="flex-none text-[13px] text-faint">{timeAgo(item.createdAt)}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
 
 function Profile() {
-    const [activeTab, setActiveTab] = useState("movies");
+  const { username } = useParams();
+  const { isMember } = useAuth();
+  const toast = useToast();
+  const queryClient = useQueryClient();
+  const [editingFive, setEditingFive] = useState(false);
+  const [connections, setConnections] = useState(null);
 
-    const stats = [
-        { title: "Movies Watched", value: "428", icon: <FaFilm />, trend: "+12 this month" },
-        { title: "Reviews Written", value: "86", icon: <FaQuoteLeft />, trend: "4.8 avg length" },
-        { title: "Watchlist Items", value: "74", icon: <FaBookmark />, trend: "18 priority" },
-        { title: "Average Rating", value: "4.4", icon: <FaStar />, trend: "Top 5% Cinephile" },
-    ];
+  const key = ["profile", username];
+  const { data: profile, isLoading, isError, error, refetch } = useQuery({
+    queryKey: key,
+    queryFn: () => socialApi.profile(username),
+  });
 
-    const genres = ["Sci-Fi", "Psychological Thriller", "Neo-Noir", "Crime Drama", "Mystery", "Adventure"];
+  const follow = useMutation({
+    mutationFn: () => (profile.viewerFollows ? socialApi.unfollow(username) : socialApi.follow(username)),
+    onSuccess: (result) => {
+      queryClient.setQueryData(key, (current) => ({ ...current, viewerFollows: result.viewerFollows, followers: result.followers }));
+      queryClient.invalidateQueries({ queryKey: ["me", "feed"] });
+    },
+    onError: (err) => toast.show(errorMessage(err), { tone: "error" }),
+  });
 
-    const topMovies = [
-        {
-            title: "Interstellar",
-            year: "2014",
-            director: "Christopher Nolan",
-            rating: "5.0",
-            poster: "https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg",
-            review:
-                "Every time I watch it, I find something new. The emotional connection between Cooper and Murph combined with Hans Zimmer's score makes this an eternal masterpiece.",
-            tags: ["Mind-Bending", "Emotional", "Cinematic"],
-            rewatches: 7,
-        },
-        {
-            title: "The Dark Knight",
-            year: "2008",
-            director: "Christopher Nolan",
-            rating: "5.0",
-            poster: "https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg",
-            review:
-                "A perfect balance between action, philosophy, and character writing. Heath Ledger's Joker redefined superhero cinema into high art.",
-            tags: ["Crime", "Philosophy", "Iconic"],
-            rewatches: 5,
-        },
-        {
-            title: "Blade Runner 2049",
-            year: "2017",
-            director: "Denis Villeneuve",
-            rating: "4.9",
-            poster: "https://image.tmdb.org/t/p/w500/gajva2L0rPYkEWjzgFlBXCAVBE5.jpg",
-            review:
-                "Pure visual poetry. Every single frame feels like gallery artwork while telling one of the most quiet, emotional sci-fi stories ever made.",
-            tags: ["Atmospheric", "Visuals", "Futuristic"],
-            rewatches: 4,
-        },
-    ];
-
-    const directors = [
-        { name: "Christopher Nolan", count: "11 films watched", tag: "Favorite" },
-        { name: "Denis Villeneuve", count: "8 films watched", tag: "Visionary" },
-        { name: "Martin Scorsese", count: "14 films watched", tag: "Classic" },
-        { name: "David Fincher", count: "9 films watched", tag: "Master" },
-        { name: "Quentin Tarantino", count: "9 films watched", tag: "Auteur" },
-        { name: "Greta Gerwig", count: "4 films watched", tag: "Rising" },
-    ];
-
-    const actors = [
-        { name: "Leonardo DiCaprio", roles: "Inception, Shutter Island" },
-        { name: "Christian Bale", roles: "The Dark Knight, Prestige" },
-        { name: "Cillian Murphy", roles: "Oppenheimer, Inception" },
-        { name: "Ryan Gosling", roles: "Blade Runner 2049, Drive" },
-        { name: "Saoirse Ronan", roles: "Little Women, Lady Bird" },
-        { name: "Zendaya", roles: "Dune, Euphoria" },
-    ];
-
+  if (isLoading) {
     return (
-        <div className="min-h-screen bg-[#0a0a0a] text-[#e8e6e3] selection:bg-amber-500 selection:text-black font-sans">
-            {/* Subtle film grain overlay */}
-            <div
-                className="fixed inset-0 pointer-events-none opacity-[0.03] z-50"
-                style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-                }}
-            />
-
-            <div className="relative z-10">
-                {/* --- Hero Profile Header --- */}
-                <section className="relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-b from-amber-900/10 to-transparent" />
-                    <div className="max-w-5xl mx-auto px-6 pt-16 pb-12 relative">
-                        <div className="flex flex-col items-center text-center">
-                            {/* Profile Avatar */}
-                            <div className="relative mb-6">
-                                <div className="absolute -inset-2 rounded-full bg-amber-500/20 blur-xl" />
-                                <img
-                                    src="https://pbs.twimg.com/profile_images/1990968763529740288/URXwmvIW.jpg"
-                                    alt="Mahesh Babu"
-                                    className="relative w-28 h-28 rounded-full object-cover border-2 border-amber-500/30 shadow-2xl"
-                                />
-                                {/* <div className="absolute -bottom-1 -right-1 bg-amber-500 text-black text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                                    <FaStar className="text-[8px]" /> Pro
-                                </div> */}
-                            </div>
-
-                            <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white mb-2">
-                                Sai Vijay
-                            </h1>
-                            <p className="text-amber-500/80 text-sm font-medium tracking-widest uppercase mb-4">
-                                Cinephile
-                            </p>
-                            <p className="text-[#888] max-w-lg text-base leading-relaxed mb-6">
-                                Software engineer by day, film analyst by night. I chase stories that challenge perception, scores that linger, and visuals that haunt.
-                            </p>
-
-                            {/* Genre Badges */}
-                            <div className="flex flex-wrap justify-center gap-2 mb-8">
-                                {genres.map((genre) => (
-                                    <span
-                                        key={genre}
-                                        className="px-3 py-1 rounded-full bg-[#1a1a1a] border border-[#333] text-[#999] text-xs hover:border-amber-500/40 hover:text-amber-400 transition-colors cursor-default"
-                                    >
-                                        {genre}
-                                    </span>
-                                ))}
-                            </div>
-
-                            {/* Favorite Quote Box */}
-                            <div className="relative max-w-xl bg-[#111] border border-[#222] rounded-2xl p-5">
-                                <FaQuoteLeft className="absolute -top-3 left-4 text-amber-500/40 text-lg" />
-                                <p className="text-[#aaa] text-sm italic leading-relaxed text-center">
-A film is – or should be – more like music than like fiction. It should be a progression of moods and feelings. The theme, what’s behind the emotion, the meaning, all that comes later.
-– <b className="text-white">Stanley Kubrick</b>                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* --- Stats Grid Section --- */}
-                <section className="max-w-5xl mx-auto px-6 py-8">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        {stats.map((item) => (
-                            <div
-                                key={item.title}
-                                className="bg-[#111] border border-[#222] rounded-xl p-4 hover:border-amber-500/20 transition-colors group"
-                            >
-                                <div className="flex items-center gap-2 text-[#555] mb-2">
-                                    <span className="text-xs group-hover:text-amber-500 transition-colors">{item.icon}</span>
-                                    <span className="text-[11px] uppercase tracking-wider">{item.title}</span>
-                                </div>
-                                <div className="text-2xl font-black text-white">{item.value}</div>
-                                <p className="text-[11px] text-amber-500/70 mt-1 font-medium">{item.trend}</p>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-
-                {/* --- Navigation Tabs --- */}
-                <div className="max-w-5xl mx-auto px-6 mb-8">
-                    <div className="flex gap-1 bg-[#111] border border-[#222] rounded-xl p-1 w-fit">
-                        {[
-                            { id: "movies", label: "Top 3", icon: <FaFire /> },
-                            { id: "favorites", label: "People", icon: <FaHeart /> },
-                        ].map((tab) => (
-                            <button
-                                key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id
-                                        ? "bg-amber-500 text-black"
-                                        : "text-[#666] hover:text-[#ccc]"
-                                    }`}
-                            >
-                                <span className="text-xs">{tab.icon}</span>
-                                <span>{tab.label}</span>
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                {/* --- Top Movies Section (Personal Canon) --- */}
-                {(activeTab === "movies") && (
-                    <section className="max-w-5xl mx-auto px-6 pb-20">
-                        <div className="flex items-center gap-3 mb-6">
-                            <FaFilm className="text-amber-500" />
-                            <h2 className="text-xl font-black text-white">My Personal Canon</h2>
-                            <span className="text-[#444] text-sm">— the films that define my taste</span>
-                        </div>
-
-                        <div className="space-y-4">
-                            {topMovies.map((movie, idx) => (
-                                <div
-                                    key={movie.title}
-                                    className="group bg-[#111] border border-[#222] rounded-2xl overflow-hidden hover:border-amber-500/30 transition-all duration-300"
-                                >
-                                    <div className="flex flex-col md:flex-row">
-                                        {/* Poster */}
-                                        <div className="relative w-full md:w-48 h-64 md:h-auto flex-shrink-0 overflow-hidden">
-                                            <img
-                                                src={movie.poster}
-                                                alt={movie.title}
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                            />
-                                            <div className="absolute top-3 left-3 w-8 h-8 bg-black/80 backdrop-blur rounded-lg flex items-center justify-center text-amber-400 font-black text-sm border border-amber-500/30">
-                                                {idx + 1}
-                                            </div>
-                                            <div className="absolute bottom-3 right-3 bg-black/80 backdrop-blur px-2 py-1 rounded-lg flex items-center gap-1 text-amber-400 text-xs font-bold border border-amber-500/20">
-                                                <FaStar className="text-[10px]" />
-                                                <span>{movie.rating}</span>
-                                            </div>
-                                        </div>
-
-                                        {/* Content */}
-                                        <div className="p-5 flex-1 flex flex-col justify-between">
-                                            <div>
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <span className="text-amber-500/80 text-xs font-medium">{movie.director}</span>
-                                                    <span className="text-[#444]">•</span>
-                                                    <span className="text-[#666] text-xs">{movie.year}</span>
-                                                </div>
-                                                <h3 className="text-xl font-black text-white mb-3">{movie.title}</h3>
-                                                <p className="text-[#999] text-sm leading-relaxed italic mb-4">
-                                                    "{movie.review}"
-                                                </p>
-                                            </div>
-
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex flex-wrap gap-2">
-                                                    {movie.tags.map((tag) => (
-                                                        <span
-                                                            key={tag}
-                                                            className="px-2 py-0.5 rounded-md bg-[#1a1a1a] text-[#777] text-[11px] border border-[#2a2a2a]"
-                                                        >
-                                                            #{tag}
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                                <div className="flex items-center gap-1 text-[#555] text-xs">
-                                                    <FaFire className="text-[10px]" />
-                                                    <span>{movie.rewatches} rewatches</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </section>
-                )}
-
-                {/* --- Favorites (Directors & Actors) Section --- */}
-                {(activeTab === "favorites") && (
-                    <section className="max-w-5xl mx-auto px-6 pb-20">
-                        <div className="grid md:grid-cols-2 gap-6">
-                            {/* Visionary Directors */}
-                            <div className="bg-[#111] border border-[#222] rounded-2xl p-6">
-                                <div className="flex items-center gap-2 mb-5">
-                                    <FaVideo className="text-amber-500" />
-                                    <h3 className="text-lg font-black text-white">Directors I Trust</h3>
-                                </div>
-                                <div className="space-y-2">
-                                    {directors.map((director, index) => (
-                                        <div
-                                            key={director.name}
-                                            className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-[#1a1a1a] transition-colors group"
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <span className="text-[#333] font-black text-sm w-4">{index + 1}</span>
-                                                <div>
-                                                    <p className="text-sm font-semibold text-[#ddd] group-hover:text-white transition-colors">
-                                                        {director.name}
-                                                    </p>
-                                                    <p className="text-[11px] text-[#555]">{director.count}</p>
-                                                </div>
-                                            </div>
-                                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded bg-[#1a1a1a] text-amber-500/80 border border-[#2a2a2a]">
-                                                {director.tag}
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Performers */}
-                            <div className="bg-[#111] border border-[#222] rounded-2xl p-6">
-                                <div className="flex items-center gap-2 mb-5">
-                                    <FaHeart className="text-amber-500" />
-                                    <h3 className="text-lg font-black text-white">Favorite Performers</h3>
-                                </div>
-                                <div className="space-y-2">
-                                    {actors.map((actor, index) => (
-                                        <div
-                                            key={actor.name}
-                                            className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-[#1a1a1a] transition-colors group"
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <span className="text-[#333] font-black text-sm w-4">{index + 1}</span>
-                                                <div>
-                                                    <p className="text-sm font-semibold text-[#ddd] group-hover:text-white transition-colors">
-                                                        {actor.name}
-                                                    </p>
-                                                    <p className="text-[11px] text-[#555]">{actor.roles}</p>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-1 text-amber-500/60">
-                                                <FaStar className="text-[10px]" />
-                                                <span className="text-[11px] font-bold">5.0</span>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                )}
-            </div>
-        </div>
+      <div className="md:grid md:grid-cols-[45fr_55fr]">
+        <Skeleton className="h-[40svh] rounded-none md:h-[calc(100svh-64px)]" />
+        <div className="bg-paper px-5 py-12 md:px-14"><Skeleton className="h-24 w-24 rounded-full" /><Skeleton className="mt-6 h-12 w-2/3" /><SkeletonText className="mt-8" /></div>
+      </div>
     );
+  }
+
+  if (isError) {
+    const missing = error?.response?.status === 404;
+    return (
+      <div className="mx-auto max-w-[1440px] px-5 py-24 md:px-8">
+        <h1 className="display text-5xl">{missing ? `There's no @${username} here` : "This profile didn't load"}</h1>
+        <div className="mt-8 flex gap-3">
+          {!missing && <Button variant="primary" onClick={() => refetch()}>Try again</Button>}
+          <LinkButton to="/community" variant="secondary">Find members</LinkButton>
+        </div>
+      </div>
+    );
+  }
+
+  const { user, counts } = profile;
+  const banner = user.bannerPath || profile.topFive.find((title) => title.backdropPath)?.backdropPath;
+  const bannerTitle = !user.bannerPath ? profile.topFive.find((title) => title.backdropPath) : null;
+
+  const figures = [
+    ["Watched", counts.watched, null],
+    ["Diary", counts.diary, null],
+    ["Reviews", counts.reviews, null],
+    ["Followers", profile.followers, "followers"],
+    ["Following", profile.following, "following"],
+  ];
+
+  return (
+    <>
+      <div className="md:grid md:grid-cols-[45fr_55fr]">
+        <div className="sticky top-14 h-[44svh] bg-raised md:top-16 md:h-[calc(100svh-64px)]">
+          {banner ? (
+            <>
+              <img src={tmdbImage(banner, "w1280")} srcSet={backdropSrcSet(banner)} sizes="(min-width: 768px) 45vw, 100vw" alt="" width="1280" height="720" className="h-full w-full object-cover" />
+              {bannerTitle && (
+                <Link to={titleHref(bannerTitle)} className="absolute inset-x-0 bottom-0 hidden bg-paper px-5 py-4 text-[15px] text-muted hover:text-ink md:block">
+                  {bannerTitle.title} <span className="text-faint">· number one in {profile.isSelf ? "your" : "their"} five</span>
+                </Link>
+              )}
+            </>
+          ) : (
+            <div className="flex h-full items-end p-8"><Avatar user={user} size="xl" /></div>
+          )}
+        </div>
+
+        <article className="relative z-10 -mt-[8svh] bg-paper px-5 pb-16 pt-10 md:mt-0 md:px-14 md:pt-16 lg:px-[72px]">
+          <div className="max-w-[640px]">
+            <Reveal className="flex items-center gap-5">
+              <Avatar user={user} size="lg" />
+              <div className="min-w-0">
+                <h1 className="display truncate text-[clamp(2.5rem,4.4vw,4rem)] text-ink">{user.name}</h1>
+                <p className="mt-1 text-[15px] text-faint">@{user.username} · member since {new Date(user.createdAt).getFullYear()}</p>
+              </div>
+            </Reveal>
+
+            {user.bio && <Reveal index={1}><p className="mt-6 max-w-[52ch] text-[17px] leading-relaxed text-ink">{user.bio}</p></Reveal>}
+
+            <Reveal index={2} className="mt-8 flex flex-wrap items-center gap-3">
+              {profile.isSelf ? (
+                <LinkButton to="/settings" variant="secondary">Edit profile</LinkButton>
+              ) : isMember ? (
+                <Button variant={profile.viewerFollows ? "secondary" : "primary"} onClick={() => follow.mutate()} disabled={follow.isPending}>
+                  {profile.viewerFollows ? "Following" : `Follow ${user.name.split(" ")[0]}`}
+                </Button>
+              ) : (
+                <LinkButton to="/login" variant="primary">Sign in to follow</LinkButton>
+              )}
+            </Reveal>
+
+            <Reveal index={3}>
+              <dl className="num mt-10 grid grid-cols-3 gap-y-6 sm:grid-cols-5">
+                {figures.map(([label, value, list]) => (
+                  <div key={label}>
+                    <dt className="text-[13px] text-faint">{label}</dt>
+                    <dd className="mt-1">
+                      {list ? (
+                        <button type="button" onClick={() => setConnections(list)} className="text-2xl text-ink hover:text-accent">{formatNumber(value)}</button>
+                      ) : (
+                        <span className="text-2xl text-ink">{formatNumber(value)}</span>
+                      )}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </Reveal>
+
+            <TheirFive profile={profile} onEdit={() => setEditingFive(true)} />
+            <RecentDiary username={username} isSelf={profile.isSelf} />
+            <RecentReviews username={username} name={user.name} isSelf={profile.isSelf} />
+            <Favourites username={username} />
+            <Activity username={username} />
+
+            {!counts.watched && !counts.reviews && (
+              <EmptyState className="mt-16" title={profile.isSelf ? "Your profile fills in as you watch" : "Nothing here yet"}>
+                {profile.isSelf ? "Rate, log or review anything and it shows up here." : `${user.name.split(" ")[0]} hasn't logged anything yet.`}
+              </EmptyState>
+            )}
+          </div>
+        </article>
+      </div>
+
+      {editingFive && <TopFiveEditor initial={profile.topFive} onClose={() => setEditingFive(false)} />}
+      {connections && <ConnectionsDialog username={username} direction={connections} onClose={() => setConnections(null)} />}
+    </>
+  );
 }
 
 export default Profile;

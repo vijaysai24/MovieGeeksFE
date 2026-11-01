@@ -1,97 +1,24 @@
-# Movie Geek
+# Movie Geeks
 
-This project was created with Vite + React and later extended with React Router and Tailwind CSS.
+React 19 + Vite + Tailwind v4 frontend for Movie Geeks. All data comes from the Movie Geeks API
+(`../MovieGeeksBE`); the browser never talks to TMDB directly.
 
-## Project setup from create-project command
-
-The project was initialized with:
+## Run it
 
 ```bash
-npm create vite@latest movie-geek -- --template react
-cd movie-geek
 npm install
+cp .env.example .env    # VITE_API_URL, defaults to http://localhost:5000/api
+npm run dev             # http://localhost:5173 (the API allows this origin)
+npm run build && npm run preview -- --port 5173
 ```
 
-Additional packages were added for routing and styling:
+## Where things are
 
-```bash
-npm install react-router-dom tailwindcss @tailwindcss/vite
-```
+- `src/Components/Pages`: one file per route; `src/Routing/AppRoutes.jsx` lazy-loads them.
+- `src/Components/Home`, `Movie`, `UI`, `Layout`: page sections, film components, primitives, shell.
+- `src/Services`: the API client (token refresh), per-area API calls, image URLs, guest wishlist.
+- `src/Context`: session (`AuthContext`) and toasts; `src/Hooks`: shared data hooks.
+- Design tokens (colours, type, steps) are in `src/index.css` under `@theme`.
 
-### Routing flow
-
-The app was structured with a route-based layout flow by creating folders for:
-
-- src/Components/Layout for shared UI sections like the navbar and footer
-- src/Components/Pages for page-level views such as Home, Directors, Journals, and MovieDetails
-- src/Routing for the route configuration
-
-The app is wrapped with BrowserRouter in src/main.jsx so navigation works through the route setup in src/Routing/AppRoutes.jsx.
-
-### Styling setup
-
-The default Vite starter CSS setup was removed in favor of Tailwind CSS.
-
-- src/index.css now imports Tailwind using `@import "tailwindcss";`
-- vite.config.js enables Tailwind through the Vite plugin
-- the default App.css-based styling flow was not kept for this project
-
-## Available scripts
-
-Run the app locally:
-
-```bash
-npm run dev
-```
-
-Build for production:
-
-```bash
-npm run build
-```
-
-Preview the production build:
-
-```bash
-npm run preview
-```
-
-Lint the project:
-
-```bash
-npm run lint
-```
-
-## Project structure
-
-- src/Components/Layout: shared layout components such as the navbar, footer, and dashboard
-- src/Components/Pages: route-based pages including Home, Directors, Journals, and MovieDetails
-- src/Routing: route configuration for the application
-- public/: static assets
-
-## Tech stack
-
-- React 19
-- Vite 8
-- React Router DOM
-- Tailwind CSS
-- Oxlint
-
-
-### Routing flow
-
-The app was structured with a route-based layout flow by creating folders for:
-
-- src/Components/Layout for shared UI sections like the navbar and footer
-- src/Components/Pages for page-level views such as Home, Directors, Journals, and MovieDetails
-- src/Routing for the route configuration
-
-The app is wrapped with BrowserRouter in src/main.jsx so navigation works through the route setup in src/Routing/AppRoutes.jsx.
-
-### Styling setup
-
-The default Vite starter CSS setup was removed in favor of Tailwind CSS.
-
-- src/index.css now imports Tailwind using `@import "tailwindcss";`
-- vite.config.js enables Tailwind through the Vite plugin
-- the default App.css-based styling flow was not kept for this project
+Guests can browse everything and keep a wishlist in the browser; it merges into their account when
+they sign in.

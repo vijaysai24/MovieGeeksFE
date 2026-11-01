@@ -1,13 +1,148 @@
 @import "tailwindcss";
 
-body{
-    background:#141414;
+/* Movie Geeks design tokens.
+   Ground is true black; surfaces step up by lightness alone (no shadows or borders at rest).
+   Amber is the one hue: it marks data (ratings, the member score) and the page's main action,
+   never navigation or tabs. Boska sets film titles and page headings; Inter sets everything else. */
+@theme {
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Boska", Georgia, "Times New Roman", serif;
+
+  --color-ground: #000000;
+  --color-surface: #111111;
+  --color-raised: #1c1c1c;
+  --color-nested: #2a2a2a;
+  --color-paper: #12100d;
+  --color-line: #1f1f1f;
+  --color-control: #444444;
+
+  --color-ink: #ffffff;
+  --color-muted: #b4b4b4;
+  --color-faint: #949494;
+
+  --color-accent: #f5b02e;
+  --color-accent-ink: #1b1305;
+  --color-light: #ecebe8;
+  --color-light-ink: #141414;
+
+  --color-positive: #3fc07a;
+  --color-negative: #e5566f;
+
+  --text-step-small: clamp(0.8125rem, 0.79rem + 0.1vw, 0.875rem);
+  --text-step-body: clamp(1rem, 0.96rem + 0.2vw, 1.0625rem);
+  --text-step-lead: clamp(1.25rem, 1.1rem + 0.7vw, 1.625rem);
+  --text-step-head: clamp(2rem, 1.3rem + 3.2vw, 4rem);
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.hide-scrollbar::-webkit-scrollbar{
-    display:none;
+@layer base {
+  html {
+    background: var(--color-ground);
+    color: var(--color-ink);
+    -webkit-text-size-adjust: 100%;
+    color-scheme: dark;
+  }
+
+  body {
+    margin: 0;
+    background: var(--color-ground);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: var(--color-accent);
+    color: var(--color-accent-ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 2px;
+  }
+
+  img {
+    display: block;
+    max-width: 100%;
+  }
+
+  button,
+  select,
+  input,
+  textarea {
+    font: inherit;
+    color: inherit;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  select option {
+    background: var(--color-surface);
+    color: var(--color-ink);
+  }
 }
 
-.hide-scrollbar{
-    scrollbar-width:none;
+@layer components {
+  .display {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 0.95;
+  }
+
+  .num {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .hide-scrollbar {
+    scrollbar-width: none;
+  }
+
+  /* Ticket-stub edges for the programme sheet: shallow scallops cut into top and bottom. */
+  .scalloped {
+    --scallop-top: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='10'%3E%3Cpath d='M0 0H5A10 10 0 0 0 25 0H30V10H0Z'/%3E%3C/svg%3E");
+    --scallop-bottom: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='10'%3E%3Cpath d='M0 0H30V10H25A10 10 0 0 0 5 10H0Z'/%3E%3C/svg%3E");
+    --scallop-body: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Crect width='10' height='10'/%3E%3C/svg%3E");
+    -webkit-mask:
+      var(--scallop-top) top left / 30px 10px repeat-x,
+      var(--scallop-bottom) bottom left / 30px 10px repeat-x,
+      var(--scallop-body) center / 100% calc(100% - 20px) no-repeat;
+    mask:
+      var(--scallop-top) top left / 30px 10px repeat-x,
+      var(--scallop-bottom) bottom left / 30px 10px repeat-x,
+      var(--scallop-body) center / 100% calc(100% - 20px) no-repeat;
+  }
+
+  /* Loading placeholders: flat bars at the real size of what they stand in for. */
+  .skeleton {
+    background: var(--color-raised);
+    animation: skeleton-pulse 1.6s ease-in-out infinite;
+  }
+}
+
+@keyframes skeleton-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
 }
