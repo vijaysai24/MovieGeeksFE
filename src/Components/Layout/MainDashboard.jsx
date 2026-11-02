@@ -25,8 +25,7 @@ function MainDashboard() {
       <ScrollToTop />
       <NavBar />
 
-      {/* The page sits above the footer, which waits underneath and is uncovered at the end. */}
-      <main id="main" className={`relative z-10 flex-1 bg-ground pb-24 md:pb-32 ${overHero ? "" : "pt-14 md:pt-16"}`}>
+      <main id="main" className={`flex-1 bg-ground pb-24 md:pb-32 ${overHero ? "" : "pt-14 md:pt-16"}`}>
         <Outlet />
       </main>
 

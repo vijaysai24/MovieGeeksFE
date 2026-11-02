@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../../Context/AuthContext";
+import { LinkButton } from "../UI/Button";
+import { Wordmark } from "./Wordmark";
 
 const COLUMNS = [
   {
@@ -32,50 +34,56 @@ const COLUMNS = [
   },
 ];
 
-// The close of every page: the one light band on the site, uncovered as the page slides away,
-// with the name set across its full width.
+// The close of every page, on the same dark ground as the rest: what to do next, where to go, and
+// the name set large in a tone just off the ground, like the last card of the credits.
 function Footer() {
   const { isMember } = useAuth();
   const year = new Date().getFullYear();
 
   return (
-    <footer className="sticky bottom-0 z-0 bg-light text-light-ink">
-      <div className="page grid min-h-[78svh] grid-rows-[auto_1fr_auto] pb-24 pt-14 md:min-h-[92svh] md:pb-6 md:pt-16">
-        <div className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-4">
+    <footer className="overflow-hidden bg-surface text-ink">
+      <div className="page pb-28 pt-16 md:pb-10 md:pt-20">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-12 md:grid-cols-[minmax(0,1.6fr)_repeat(3,minmax(0,1fr))]">
+          <div className="col-span-2 md:col-span-1">
+            <Wordmark />
+            <p className="mt-4 max-w-[30ch] text-ui text-muted">A diary for everything you watch, and the people who watch it with you.</p>
+            {!isMember && (
+              <div className="mt-6 flex flex-wrap gap-2">
+                <LinkButton to="/register" variant="accent">Join Free</LinkButton>
+                <LinkButton to="/login" variant="ghost">Sign In</LinkButton>
+              </div>
+            )}
+          </div>
+
           {COLUMNS.filter((column) => !column.member || isMember).map((column) => (
             <nav key={column.title} aria-label={column.title}>
-              <p className="text-ui font-semibold">{column.title}</p>
-              <ul className="mt-3 space-y-2">
+              <p className="text-ui font-semibold text-ink">{column.title}</p>
+              <ul className="mt-4 space-y-3">
                 {column.links.map(([label, to]) => (
                   <li key={to}>
-                    <Link to={to} className="text-ui text-light-muted transition-colors can-hover:hover:text-light-ink">{label}</Link>
+                    <Link to={to} className="text-ui text-muted transition-colors can-hover:hover:text-ink">{label}</Link>
                   </li>
                 ))}
               </ul>
             </nav>
           ))}
-          <div className="col-span-2 md:col-span-1">
-            <p className="text-ui font-semibold">About the data</p>
-            <p className="mt-3 max-w-[36ch] text-ui leading-relaxed text-light-muted">
-              Film and series data and images from{" "}
-              <a href="https://www.themoviedb.org/" target="_blank" rel="noreferrer" className="underline underline-offset-4 can-hover:hover:text-light-ink">TMDB</a>.
-              Cinefile uses the TMDB API but is not endorsed or certified by TMDB. Streaming availability by{" "}
-              <a href="https://www.justwatch.com/" target="_blank" rel="noreferrer" className="underline underline-offset-4 can-hover:hover:text-light-ink">JustWatch</a>.
-            </p>
-          </div>
         </div>
 
-        <div aria-hidden="true" />
+        <svg viewBox="0 0 1000 232" className="mt-16 block w-full text-raised md:mt-24" aria-hidden="true">
+          <text x="-6" y="196" textLength="1012" lengthAdjust="spacingAndGlyphs" fill="currentColor" style={{ fontFamily: "Boska, Georgia, serif", fontSize: 262, fontWeight: 500, letterSpacing: "-0.02em" }}>
+            Cinefile
+          </text>
+        </svg>
 
-        <div>
-          <svg viewBox="0 0 1000 232" className="block w-full" role="img" aria-label="Cinefile">
-            <text x="-6" y="196" textLength="1012" lengthAdjust="spacingAndGlyphs" fill="currentColor" style={{ fontFamily: "Boska, Georgia, serif", fontSize: 262, fontWeight: 500, letterSpacing: "-0.02em" }}>
-              Cinefile
-            </text>
-          </svg>
-          <p className="mt-4 flex flex-wrap justify-between gap-2 text-[13px] text-light-muted">
-            <span>&copy; {year} <span translate="no">Cinefile</span>. A diary for everything you watch.</span>
-            <span>Made for people who stay for the credits.</span>
+        <div className="mt-8 grid gap-4 text-[14px] text-faint md:grid-cols-2 md:gap-10">
+          <p>
+            &copy; {year} <span translate="no">Cinefile</span>. Made for people who stay for the credits.
+          </p>
+          <p className="md:text-right">
+            Film and series data and images from{" "}
+            <a href="https://www.themoviedb.org/" target="_blank" rel="noreferrer" className="text-muted underline underline-offset-4 can-hover:hover:text-ink">TMDB</a>.
+            {" "}<span translate="no">Cinefile</span> uses the TMDB API but is not endorsed or certified by TMDB. Streaming availability by{" "}
+            <a href="https://www.justwatch.com/" target="_blank" rel="noreferrer" className="text-muted underline underline-offset-4 can-hover:hover:text-ink">JustWatch</a>.
           </p>
         </div>
       </div>
