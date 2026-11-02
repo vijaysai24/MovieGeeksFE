@@ -1,9 +1,16 @@
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { BookOpen, Dna, PartyPopper } from "lucide-react";
 import { catalogApi } from "../../Services/catalogService";
-import { backdropSrcSet, tmdbImage } from "../../Services/images";
-import { Skeleton } from "../UI/States";
+import { backdropSrcSet, tmdbImage, titleHref } from "../../Services/images";
 
-// Sign-in and sign-up share the split stage: a still from this week's films beside the form.
+const PROMISES = [
+  { icon: BookOpen, title: "A diary that remembers", body: "Log, rate and review everything you watch." },
+  { icon: Dna, title: "Your film DNA", body: "See the taste your ratings reveal, and who shares it." },
+  { icon: PartyPopper, title: "Lists and watch parties", body: "Gather films around an idea, or vote on tonight’s pick." },
+];
+
+// Sign-in and sign-up sit on a still from this week's most-watched title, dimmed so the form leads.
 export function AuthLayout({ title, intro, children }) {
   const { data } = useQuery({
     queryKey: ["catalog", "list", "trending", "all"],
@@ -13,32 +20,46 @@ export function AuthLayout({ title, intro, children }) {
   const still = data?.items.find((item) => item.backdropPath);
 
   return (
-    <div className="md:grid md:min-h-[calc(100svh-64px)] md:grid-cols-2">
-      <div className="relative hidden md:block">
-        {still ? (
-          <>
-            <img
-              src={tmdbImage(still.backdropPath, "w1280")}
-              srcSet={backdropSrcSet(still.backdropPath)}
-              sizes="50vw"
-              alt={`Still from ${still.title}`}
-              width="1280"
-              height="720"
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-            <p className="absolute inset-x-0 bottom-0 bg-paper px-6 py-4 text-[15px] text-muted">
-              {still.title} <span className="text-faint">{still.year}</span>
+    <div className="relative isolate min-h-svh overflow-hidden bg-surface">
+      {still && (
+        <img
+          src={tmdbImage(still.backdropPath, "w1280")}
+          srcSet={backdropSrcSet(still.backdropPath)}
+          sizes="100vw"
+          alt=""
+          width="1920"
+          height="1080"
+          fetchpriority="high"
+          className="absolute inset-0 -z-10 h-full w-full object-cover"
+        />
+      )}
+      <div className="absolute inset-0 -z-10 bg-black/35" aria-hidden="true" />
+      <div className="scrim-left absolute inset-0 -z-10" aria-hidden="true" />
+      <div className="scrim-bottom absolute inset-0 -z-10" aria-hidden="true" />
+
+      <div className="page grid min-h-svh items-center gap-12 pb-16 pt-24 md:pt-28 lg:grid-cols-[minmax(0,1fr)_440px] lg:gap-20">
+        <div className="hidden self-end lg:block">
+          <p className="display max-w-[14ch] text-[clamp(3rem,2rem+3vw,5rem)] leading-[0.98] text-ink">A diary for everything you watch.</p>
+          <ul className="mt-10 grid max-w-2xl grid-cols-3 gap-6">
+            {PROMISES.map(({ icon: Icon, title: heading, body }) => (
+              <li key={heading}>
+                <Icon size={20} className="text-accent" aria-hidden="true" />
+                <p className="mt-3 text-[15px] font-medium text-ink">{heading}</p>
+                <p className="mt-1 text-[14px] text-muted">{body}</p>
+              </li>
+            ))}
+          </ul>
+          {still && (
+            <p className="mt-12 text-[13px] text-faint">
+              Still from <Link to={titleHref(still)} className="text-muted can-hover:hover:text-ink">{still.title}</Link>{still.year ? `, ${still.year}` : ""}
             </p>
-          </>
-        ) : (
-          <Skeleton className="absolute inset-0 rounded-none" />
-        )}
-      </div>
-      <div className="flex items-center bg-paper px-5 py-14 md:px-14">
-        <div className="mx-auto w-full max-w-[420px]">
-          <h1 className="display text-[clamp(2.5rem,4vw,3.5rem)] text-ink">{title}</h1>
-          {intro && <p className="mt-4 text-base text-muted">{intro}</p>}
-          <div className="mt-10">{children}</div>
+          )}
+        </div>
+
+        <div className="mx-auto w-full max-w-[440px] rounded-panel bg-surface p-7 shadow-float md:p-9">
+          <h1 className="display text-[clamp(2.25rem,1.8rem+1.6vw,3rem)] leading-[1.02] text-ink">{title}</h1>
+          {intro && <p className="mt-3 text-[15px] text-muted">{intro}</p>}
+          <div className="mt-8">{children}</div>
         </div>
       </div>
     </div>

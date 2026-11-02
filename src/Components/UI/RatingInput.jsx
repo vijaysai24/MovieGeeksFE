@@ -58,7 +58,7 @@ export function RatingInput({ value, onChange, disabled = false, label = "Your r
               onBlur={() => setPreview(null)}
               onClick={() => onChange(point)}
               className={`${segment} rounded-[3px] transition-[background-color,transform] duration-100 active:scale-90 disabled:opacity-50 ${
-                filled ? "bg-accent" : "bg-nested hover:bg-[#3a3a3a]"
+                filled ? "bg-accent" : "bg-nested can-hover:hover:bg-[#3a3a3a]"
               }`}
             />
           );

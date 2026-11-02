@@ -46,7 +46,7 @@ export function ToastProvider({ children }) {
                     toast.action.onClick();
                     dismiss(toast.id);
                   }}
-                  className="font-semibold underline-offset-4 hover:underline"
+                  className="font-semibold underline-offset-4 can-hover:hover:underline"
                 >
                   {toast.action.label}
                 </button>

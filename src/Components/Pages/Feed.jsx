@@ -23,7 +23,7 @@ function SpoilerExcerpt({ review }) {
   const [open, setOpen] = useState(!review.hasSpoilers);
   if (open) return <p className="mt-2 line-clamp-4 text-sm leading-relaxed text-muted">{review.excerpt}</p>;
   return (
-    <button type="button" onClick={() => setOpen(true)} className="mt-2 text-sm text-faint underline-offset-4 hover:text-ink hover:underline">
+    <button type="button" onClick={() => setOpen(true)} className="mt-2 text-sm text-faint underline-offset-4 can-hover:hover:text-ink can-hover:hover:underline">
       Review contains spoilers. Show it
     </button>
   );
@@ -35,10 +35,10 @@ function FeedItem({ item }) {
       <Link to={`/u/${item.actor.username}`} className="flex-none"><Avatar user={item.actor} size="md" /></Link>
       <div className="min-w-0 flex-1">
         <p className="text-[15px] text-muted">
-          <Link to={`/u/${item.actor.username}`} className="font-medium text-ink hover:text-accent">{item.actor.name}</Link>{" "}
+          <Link to={`/u/${item.actor.username}`} className="font-medium text-ink can-hover:hover:text-accent">{item.actor.name}</Link>{" "}
           {VERBS[item.type]}{" "}
-          {item.title && <Link to={titleHref(item.title)} className="text-ink hover:text-accent">{item.title.title}</Link>}
-          {item.followed && <Link to={`/u/${item.followed.username}`} className="text-ink hover:text-accent">{item.followed.name}</Link>}
+          {item.title && <Link to={titleHref(item.title)} className="text-ink can-hover:hover:text-accent">{item.title.title}</Link>}
+          {item.followed && <Link to={`/u/${item.followed.username}`} className="text-ink can-hover:hover:text-accent">{item.followed.name}</Link>}
           {item.collection && <span className="text-ink">{item.collection.name}</span>}
           {item.rating && <span className="num"> · <span className="font-semibold text-accent">{item.rating}</span><span className="text-faint"> /10</span></span>}
         </p>
@@ -54,7 +54,7 @@ function FeedItem({ item }) {
       <div className="flex flex-none flex-col items-end gap-2">
         <span className="text-[13px] text-faint">{timeAgo(item.createdAt)}</span>
         {item.title && (
-          <Link to={titleHref(item.title)} className="w-10 overflow-hidden rounded-[3px]">
+          <Link to={titleHref(item.title)} className="w-10 overflow-hidden rounded-[4px]">
             <Poster path={item.title.posterPath} title={item.title.title} sizes="40px" />
           </Link>
         )}
@@ -73,7 +73,7 @@ function Suggestions() {
       <ul className="mt-3 grid gap-2 sm:grid-cols-2">
         {data.slice(0, 6).map((member) => (
           <li key={member.id}>
-            <Link to={`/u/${member.username}`} className="flex items-center gap-3 rounded-lg bg-surface p-3 hover:bg-raised">
+            <Link to={`/u/${member.username}`} className="flex items-center gap-3 rounded-panel bg-surface p-3 can-hover:hover:bg-raised">
               <Avatar user={member} size="md" />
               <span className="min-w-0">
                 <span className="block truncate text-sm font-medium text-ink">{member.name}</span>
@@ -97,12 +97,12 @@ function Feed() {
   const items = query.data?.pages.flatMap((page) => page.items) || [];
 
   return (
-    <AccountShell title="Following feed" subtitle="What the people you follow have watched, rated and reviewed">
+    <AccountShell title="Following Feed" subtitle="What the people you follow have watched, rated and reviewed">
       {query.isLoading && <div className="space-y-2">{Array.from({ length: 5 }, (_, index) => <Skeleton key={index} className="h-[84px] w-full rounded-[14px]" />)}</div>}
       {query.isError && <ErrorState message="Your feed didn't load." onRetry={() => query.refetch()} />}
       {query.isSuccess && !items.length && (
         <>
-          <EmptyState title="Your feed is quiet" action={<LinkButton to="/community" variant="secondary">Find people to follow</LinkButton>}>
+          <EmptyState title="Your feed is quiet" action={<LinkButton to="/community" variant="secondary">Find People to Follow</LinkButton>}>
             Follow members whose taste you trust and their ratings and reviews show up here.
           </EmptyState>
           <Suggestions />
@@ -112,7 +112,7 @@ function Feed() {
       {query.hasNextPage && (
         <div className="mt-6 max-w-3xl">
           <Button variant="secondary" full onClick={() => query.fetchNextPage()} disabled={query.isFetchingNextPage}>
-            {query.isFetchingNextPage ? "Loading..." : "Older activity"}
+            {query.isFetchingNextPage ? "Loading…" : "Older Activity"}
           </Button>
         </div>
       )}

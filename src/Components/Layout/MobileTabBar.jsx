@@ -35,7 +35,7 @@ function MobileTabBar() {
     { label: "Discover", to: "/discover", icon: Compass },
     { label: "Community", to: "/community", icon: Users },
     { label: "Library", to: "/watchlist", icon: Bookmark },
-    { label: user ? "You" : "Sign in", to: user ? `/u/${user.username}` : "/login", icon: UserRound },
+    { label: user ? "You" : "Sign In", to: user ? `/u/${user.username}` : "/login", icon: UserRound },
   ];
 
   return (

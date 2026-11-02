@@ -13,7 +13,7 @@ export function RegionSelect({ className = "" }) {
   return (
     <span className={`inline-flex min-w-0 items-center gap-1.5 ${className}`}>
       <span>Showing in</span>
-      <span className="relative inline-flex min-w-0 items-center gap-1 text-ink focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-ink hover:text-accent">
+      <span className="relative inline-flex min-w-0 items-center gap-1 text-ink focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-ink can-hover:hover:text-accent">
         <span className="truncate">{current}</span>
         <svg width="10" height="10" viewBox="0 0 12 12" aria-hidden="true" className="flex-none">
           <path d="m3 4.5 3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.5" />

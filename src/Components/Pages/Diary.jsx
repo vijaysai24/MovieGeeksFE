@@ -61,14 +61,14 @@ function EditEntry({ entry, onClose }) {
           {confirmDelete ? (
             <>
               <span className="text-sm text-muted">Delete this entry for good?</span>
-              <Button variant="danger" onClick={() => remove.mutate()} disabled={remove.isPending}>Delete entry</Button>
-              <Button variant="ghost" onClick={() => setConfirmDelete(false)}>Keep it</Button>
+              <Button variant="danger" onClick={() => remove.mutate()} disabled={remove.isPending}>Delete Entry</Button>
+              <Button variant="ghost" onClick={() => setConfirmDelete(false)}>Keep It</Button>
             </>
           ) : (
             <>
               <Button variant="danger" onClick={() => setConfirmDelete(true)}>Delete</Button>
               <Button variant="ghost" onClick={onClose} className="ml-auto">Cancel</Button>
-              <Button type="submit" variant="primary" disabled={save.isPending}>{save.isPending ? "Saving..." : "Save"}</Button>
+              <Button type="submit" variant="primary" disabled={save.isPending}>{save.isPending ? "Saving…" : "Save"}</Button>
             </>
           )}
         </div>
@@ -111,7 +111,7 @@ function Diary() {
     <AccountShell
       title="Diary"
       subtitle={query.isSuccess ? `${plural(total, "entry", "entries")} in ${year}${rewatches ? `, ${rewatches} of them rewatches` : ""}${average && entries.length === total ? ` · average ${average} /10` : ""}` : " "}
-      actions={<LinkButton to="/discover" variant="primary">Log a film</LinkButton>}
+      actions={<LinkButton to="/discover" variant="primary">Log a Film</LinkButton>}
     >
       {years.length > 0 && (
         <Tabs
@@ -126,7 +126,7 @@ function Diary() {
         {query.isLoading && <div className="space-y-3">{Array.from({ length: 6 }, (_, index) => <Skeleton key={index} className="h-[72px] w-full" />)}</div>}
         {query.isError && <ErrorState message="Your diary didn't load." onRetry={() => query.refetch()} />}
         {query.isSuccess && !entries.length && (
-          <EmptyState title="Your diary is empty" action={<LinkButton to="/discover" variant="secondary">Find a film to log</LinkButton>}>
+          <EmptyState title="Your diary is empty" action={<LinkButton to="/discover" variant="secondary">Find a Film to Log</LinkButton>}>
             Open any film or series and press Log to add the day you watched it.
           </EmptyState>
         )}
@@ -145,11 +145,11 @@ function Diary() {
                       <span className="block text-xl leading-none text-ink">{Number(entry.watchedOn.slice(8, 10))}</span>
                       <span className="block text-[12px] text-faint">{weekday(entry.watchedOn)}</span>
                     </span>
-                    <Link to={titleHref(entry.title)} className="w-10 flex-none overflow-hidden rounded-[3px]">
+                    <Link to={titleHref(entry.title)} className="w-10 flex-none overflow-hidden rounded-[4px]">
                       <Poster path={entry.title.posterPath} title={entry.title.title} sizes="40px" />
                     </Link>
                     <div className="min-w-0 flex-1">
-                      <Link to={titleHref(entry.title)} className="block truncate text-[15px] text-ink hover:text-accent">
+                      <Link to={titleHref(entry.title)} className="block truncate text-[15px] text-ink can-hover:hover:text-accent">
                         {entry.title.title} <span className="text-faint">{entry.title.year}</span>
                       </Link>
                       <p className="truncate text-[13px] text-faint">

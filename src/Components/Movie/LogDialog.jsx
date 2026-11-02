@@ -66,7 +66,7 @@ export function LogDialog({ open, onClose, title, currentRating, previousViewing
         <div className="flex justify-end gap-3 pt-1">
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
           <Button type="submit" variant="primary" disabled={mutation.isPending}>
-            {mutation.isPending ? "Saving..." : "Save to diary"}
+            {mutation.isPending ? "Saving…" : "Save to Diary"}
           </Button>
         </div>
       </form>

@@ -1,15 +1,13 @@
-import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { catalogApi } from "../../Services/catalogService";
 import { reviewApi } from "../../Services/userService";
-import { tmdbImage, titleHref } from "../../Services/images";
+import { titleHref } from "../../Services/images";
 import { formatLongDate, formatMoney, formatNumber, formatRuntime } from "../../Services/format";
 import { useRegion } from "../../Hooks/useRegion";
-import { useDebouncedValue } from "../../Hooks/useDebouncedValue";
 import { Poster } from "../Movie/PosterCard";
-import { TextInput } from "../UI/Field";
+import { TitlePicker } from "../Movie/TitlePicker";
 import { Skeleton } from "../UI/States";
 
 const parseRef = (value) => {
@@ -18,28 +16,10 @@ const parseRef = (value) => {
 };
 
 function Picker({ onPick, label }) {
-  const [query, setQuery] = useState("");
-  const debounced = useDebouncedValue(query.trim(), 250);
-  const { data = [] } = useQuery({
-    queryKey: ["catalog", "autocomplete", debounced.toLowerCase()],
-    queryFn: () => catalogApi.autocomplete(debounced),
-    enabled: debounced.length >= 2,
-  });
-  const options = data.filter((item) => item.mediaType !== "person");
-
   return (
-    <div className="rounded-lg bg-surface p-4">
-      <TextInput aria-label={label} placeholder="Find a film or series" value={query} onChange={(event) => setQuery(event.target.value)} />
-      <ul className="mt-2 space-y-1">
-        {options.map((item) => (
-          <li key={`${item.mediaType}:${item.id}`}>
-            <button type="button" onClick={() => onPick(`${item.mediaType}:${item.id}`)} className="flex w-full items-center gap-3 rounded-lg p-2 text-left hover:bg-raised">
-              <img src={tmdbImage(item.posterPath, "w92")} alt="" width="28" height="42" className="h-[42px] w-7 flex-none rounded-[2px] bg-raised object-cover" />
-              <span className="truncate text-sm text-ink">{item.title} <span className="text-faint">{item.year}</span></span>
-            </button>
-          </li>
-        ))}
-      </ul>
+    <div className="rounded-panel bg-surface p-5">
+      <p className="mb-3 text-ui font-medium text-ink">{label}</p>
+      <TitlePicker label={label} onPick={(item) => onPick(`${item.mediaType}:${item.id}`)} />
     </div>
   );
 }
@@ -77,12 +57,12 @@ function Column({ data, onClear, side }) {
   if (!data.title) return null;
   return (
     <div className="flex items-start gap-4">
-      <Link to={titleHref(data.title)} className="w-24 flex-none overflow-hidden rounded-[4px]"><Poster path={data.title.posterPath} title={data.title.title} sizes="96px" /></Link>
+      <Link to={titleHref(data.title)} className="w-24 flex-none overflow-hidden rounded-poster shadow-poster md:w-32"><Poster path={data.title.posterPath} title={data.title.title} sizes="128px" /></Link>
       <div className="min-w-0 flex-1">
-        <Link to={titleHref(data.title)} className="display block text-[1.75rem] leading-tight text-ink hover:text-accent">{data.title.title}</Link>
+        <Link to={titleHref(data.title)} className="display block text-[1.75rem] leading-tight text-ink can-hover:hover:text-accent">{data.title.title}</Link>
         <p className="mt-1 text-sm text-faint">{data.title.year} · {data.title.mediaType === "tv" ? "Series" : "Film"}</p>
       </div>
-      <button type="button" aria-label={`Remove ${side}`} onClick={onClear} className="rounded-full p-1.5 text-faint hover:text-ink"><X size={16} /></button>
+      <button type="button" aria-label={`Remove ${side}`} onClick={onClear} className="rounded-full p-1.5 text-faint can-hover:hover:text-ink"><X size={16} /></button>
     </div>
   );
 }
@@ -105,11 +85,11 @@ function Compare() {
   const both = left.title && right.title;
 
   return (
-    <div className="mx-auto max-w-[1100px] px-4 pb-10 pt-8 md:px-8">
-      <h1 className="text-2xl font-semibold tracking-tight text-ink">Compare</h1>
-      <p className="mt-1 text-[15px] text-muted">Two titles side by side: when they came out, who made them, how they scored and where to watch them.</p>
+    <div className="page pb-10 pt-10 md:pt-14">
+      <h1 className="display text-h1 leading-[1] text-ink">Compare</h1>
+      <p className="mt-4 max-w-[60ch] text-lead text-muted">Two titles side by side: when they came out, who made them, how they scored and where to watch them.</p>
 
-      <div className="mt-8 grid gap-6 md:grid-cols-2">
+      <div className="mt-12 grid gap-6 md:grid-cols-2">
         {a ? <Column data={left} side="first title" onClear={() => set("a", null)} /> : <Picker label="First title" onPick={(value) => set("a", value)} />}
         {b ? <Column data={right} side="second title" onClear={() => set("b", null)} /> : <Picker label="Second title" onPick={(value) => set("b", value)} />}
       </div>

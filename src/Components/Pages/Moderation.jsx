@@ -72,11 +72,11 @@ function Moderation() {
 
         <ul className="max-w-4xl space-y-3">
           {items.map((item) => (
-            <li key={`${item.targetType}:${item.targetId}`} className="rounded-lg bg-surface p-5">
+            <li key={`${item.targetType}:${item.targetId}`} className="rounded-panel bg-surface p-5">
               <div className="flex flex-wrap items-center gap-3 text-[13px]">
                 <span className="text-ink">{item.targetType === "REVIEW" ? "Review" : "Comment"}</span>
                 {item.title && (
-                  <span className="text-faint">on <Link to={`/${item.title.mediaType}/${item.title.id}`} className="text-muted hover:text-ink">{item.title.title}</Link></span>
+                  <span className="text-faint">on <Link to={`/${item.title.mediaType}/${item.title.id}`} className="text-muted can-hover:hover:text-ink">{item.title.title}</Link></span>
                 )}
                 <span className={`rounded-full px-2 py-0.5 text-[12px] font-medium ${STATUS_PILL[item.contentStatus] || "bg-raised text-muted"}`}>
                   {item.contentStatus?.toLowerCase()}
@@ -88,18 +88,18 @@ function Moderation() {
               {item.author && (
                 <div className="mt-4 flex items-center gap-2">
                   <Avatar user={item.author} size="xs" />
-                  <Link to={`/u/${item.author.username}`} className="text-sm text-ink hover:text-accent">{item.author.name}</Link>
+                  <Link to={`/u/${item.author.username}`} className="text-sm text-ink can-hover:hover:text-accent">{item.author.name}</Link>
                   <span className="text-[13px] text-faint">@{item.author.username}</span>
                 </div>
               )}
-              <p className="mt-2 whitespace-pre-line break-words rounded-lg bg-raised p-3 text-sm leading-relaxed text-ink">
+              <p className="mt-2 whitespace-pre-line break-words rounded-control bg-raised p-3 text-sm leading-relaxed text-ink">
                 {item.content || "This content was deleted by its author."}
               </p>
 
               {status === "OPEN" && (
                 <div className="mt-4 flex flex-wrap gap-2">
                   <Button size="sm" variant="secondary" onClick={() => act.mutate({ targetType: item.targetType, targetId: item.targetId, action: "DISMISS" })}>
-                    Dismiss{item.contentStatus === "HIDDEN" ? " and restore" : ""}
+                    Dismiss{item.contentStatus === "HIDDEN" ? " and Restore" : ""}
                   </Button>
                   {item.contentStatus !== "HIDDEN" && (
                     <Button size="sm" variant="secondary" onClick={() => act.mutate({ targetType: item.targetType, targetId: item.targetId, action: "HIDE" })}>Hide</Button>

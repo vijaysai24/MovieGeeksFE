@@ -120,7 +120,7 @@ function TonightsPick({ region }) {
           {isError && (
             <p className="text-read text-muted">
               The film archive didn&rsquo;t answer.{" "}
-              <button type="button" onClick={() => refetch()} className="font-medium text-ink underline underline-offset-4">Try again</button>
+              <button type="button" onClick={() => refetch()} className="font-medium text-ink underline underline-offset-4">Try Again</button>
             </p>
           )}
           {!isError && pick === undefined && <Skeleton className="aspect-[16/10] w-full rounded-panel" />}

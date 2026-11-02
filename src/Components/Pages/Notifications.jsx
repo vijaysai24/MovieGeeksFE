@@ -61,7 +61,7 @@ function Notifications() {
     <AccountShell
       title="Notifications"
       subtitle={query.isSuccess ? (unread ? `${unread} unread` : "You're all caught up") : " "}
-      actions={unread > 0 && <Button variant="secondary" onClick={() => markRead.mutate()} disabled={markRead.isPending}>Mark all as read</Button>}
+      actions={unread > 0 && <Button variant="secondary" onClick={() => markRead.mutate()} disabled={markRead.isPending}>Mark All as Read</Button>}
     >
       {query.isLoading && <div className="space-y-2">{Array.from({ length: 6 }, (_, index) => <Skeleton key={index} className="h-16 w-full" />)}</div>}
       {query.isError && <ErrorState message="Notifications didn't load." onRetry={() => query.refetch()} />}
@@ -71,7 +71,7 @@ function Notifications() {
       <ul className="max-w-3xl divide-y divide-line">
         {items.map((item) => (
           <li key={item.id}>
-            <button type="button" onClick={() => open(item)} className="flex w-full items-center gap-4 py-3.5 text-left transition-colors hover:bg-surface/60">
+            <button type="button" onClick={() => open(item)} className="flex w-full items-center gap-4 py-3.5 text-left transition-colors can-hover:hover:bg-surface/60">
               <span className={`h-2 w-2 flex-none rounded-full ${item.readAt ? "bg-transparent" : "bg-[#dc3532]"}`} aria-label={item.readAt ? undefined : "Unread"} />
               {item.actor ? <Avatar user={item.actor} size="sm" /> : <span className="h-8 w-8 flex-none rounded-full bg-raised" aria-hidden="true" />}
               <span className="min-w-0 flex-1">
@@ -86,7 +86,7 @@ function Notifications() {
       </ul>
       {query.hasNextPage && (
         <div className="mt-6 max-w-3xl">
-          <Button variant="secondary" full onClick={() => query.fetchNextPage()}>Older notifications</Button>
+          <Button variant="secondary" full onClick={() => query.fetchNextPage()}>Older Notifications</Button>
         </div>
       )}
     </AccountShell>

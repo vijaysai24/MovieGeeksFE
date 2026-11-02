@@ -73,7 +73,7 @@ function ProfileSettings() {
             }}
           />
           <Button variant="secondary" onClick={() => fileRef.current?.click()} disabled={avatar.isPending}>
-            {avatar.isPending ? "Uploading..." : "Upload a photo"}
+            {avatar.isPending ? "Uploading…" : "Upload a Photo"}
           </Button>
           {user.avatarUrl && <Button variant="ghost" onClick={() => avatar.mutate(null)}>Remove</Button>}
         </div>
@@ -82,7 +82,7 @@ function ProfileSettings() {
       <Section title="Profile" description="Your name, username and bio are public.">
         <form onSubmit={(event) => { event.preventDefault(); save.mutate(); }} className="space-y-4">
           <Field label="Name">{(props) => <TextInput required maxLength={80} value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} {...props} />}</Field>
-          <Field label="Username" hint="3-30 lowercase letters, numbers or underscores. Changing it changes your profile link.">
+          <Field label="Username" hint="3–30 lowercase letters, numbers or underscores. Changing it changes your profile link.">
             {(props) => <TextInput required maxLength={30} value={form.username} onChange={(event) => setForm({ ...form, username: event.target.value.toLowerCase().replace(/\s/g, "") })} {...props} />}
           </Field>
           <Field label="Bio" hint={`${form.bio.length}/300`}>
@@ -123,7 +123,7 @@ function ProfileSettings() {
 
           {save.isError && <p className="text-sm text-negative" role="alert">{errorMessage(save.error)}</p>}
           <div className="flex justify-end">
-            <Button type="submit" variant="primary" disabled={save.isPending}>{save.isPending ? "Saving..." : "Save profile"}</Button>
+            <Button type="submit" variant="primary" disabled={save.isPending}>{save.isPending ? "Saving…" : "Save Profile"}</Button>
           </div>
         </form>
       </Section>
@@ -179,14 +179,14 @@ function AccountSettings() {
           {change.isError && <p className="text-sm text-negative" role="alert">{errorMessage(change.error)}</p>}
           <div className="flex justify-end">
             <Button type="submit" variant="primary" disabled={change.isPending || !passwords.currentPassword || !passwords.newPassword}>
-              {change.isPending ? "Changing..." : "Change password"}
+              {change.isPending ? "Changing…" : "Change Password"}
             </Button>
           </div>
         </form>
       </Section>
 
       <Section title="Sign out" description="Ends this session on this device.">
-        <Button variant="secondary" onClick={signOut}>Sign out</Button>
+        <Button variant="secondary" onClick={signOut}>Sign Out</Button>
       </Section>
     </>
   );
@@ -197,7 +197,7 @@ function Settings() {
   const view = params.get("view") === "account" ? "account" : "profile";
 
   return (
-    <AccountShell title={view === "account" ? "Account settings" : "Profile settings"}>
+    <AccountShell title={view === "account" ? "Account Settings" : "Profile Settings"}>
       <Tabs
         label="Settings"
         value={view}

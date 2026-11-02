@@ -5,7 +5,7 @@ import { useToast } from "../../Context/ToastContext";
 import { errorMessage } from "../../Services/api";
 import { useGuestWishlist } from "../../Services/guestWishlist";
 import { AuthLayout } from "./AuthLayout";
-import { Field, TextInput } from "../UI/Field";
+import { Field, PasswordInput, TextInput } from "../UI/Field";
 import { Button } from "../UI/Button";
 
 const destination = (location) => {
@@ -47,18 +47,18 @@ function Login() {
     >
       <form onSubmit={submit} className="space-y-5" noValidate>
         <Field label="Email">
-          {(props) => <TextInput type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} {...props} />}
+          {(props) => <TextInput type="email" name="email" autoComplete="email" spellCheck={false} autoCapitalize="none" inputMode="email" required value={email} onChange={(event) => setEmail(event.target.value)} {...props} />}
         </Field>
         <Field label="Password">
-          {(props) => <TextInput type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} {...props} />}
+          {(props) => <PasswordInput name="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} {...props} />}
         </Field>
         {error && <p className="text-sm text-negative" role="alert">{error}</p>}
-        <Button type="submit" variant="primary" size="lg" full disabled={submitting || !email || !password}>
-          {submitting ? "Signing in..." : "Sign in"}
+        <Button type="submit" variant="accent" size="lg" full disabled={submitting || !email || !password}>
+          {submitting ? "Signing In…" : "Sign In"}
         </Button>
       </form>
       <p className="mt-8 text-[15px] text-muted">
-        New here? <Link to="/register" state={location.state} className="text-ink hover:text-accent">Start your film diary</Link>
+        New here? <Link to="/register" state={location.state} className="font-medium text-ink can-hover:hover:text-accent">Start your film diary</Link>
       </p>
     </AuthLayout>
   );

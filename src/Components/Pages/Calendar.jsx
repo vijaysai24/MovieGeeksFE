@@ -1,6 +1,6 @@
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import { catalogApi } from "../../Services/catalogService";
 import { titleHref } from "../../Services/images";
 import { plural, todayISO } from "../../Services/format";
@@ -8,7 +8,7 @@ import { useRegion, regionName } from "../../Hooks/useRegion";
 import { genreNames, useGenres } from "../../Hooks/useCatalogReference";
 import { Poster } from "../Movie/PosterCard";
 import { WishlistButton } from "../Movie/WishlistButton";
-import { IconButton } from "../UI/Button";
+import { Button, IconButton } from "../UI/Button";
 import { Segmented } from "../UI/Tabs";
 import { EmptyState, ErrorState, Skeleton } from "../UI/States";
 
@@ -21,6 +21,7 @@ const shiftMonth = (month, delta) => {
 };
 
 const monthLabel = (month) => new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric" }).format(new Date(`${month}-01T00:00:00`));
+const weekday = (date) => new Intl.DateTimeFormat("en-GB", { weekday: "long" }).format(date);
 const dayLabel = (date) => new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long" }).format(new Date(`${date}T00:00:00`));
 
 function Calendar() {
@@ -44,12 +45,12 @@ function Calendar() {
   const kindLabel = { theatrical: "in cinemas", digital: "on digital and streaming", series: "series premieres" }[kind];
 
   return (
-    <div className="mx-auto max-w-[1100px] px-4 pb-10 pt-8 md:px-8">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-ink">Release calendar</h1>
-          <p className="num mt-1 text-[15px] text-muted">
-            {isLoading ? " " : `${plural(total, kind === "series" ? "premiere" : "release")} ${kind === "series" ? "" : kindLabel} in ${regionName(region)}, ${monthLabel(month)}`}
+    <div className="page pb-10 pt-10 md:pt-14">
+      <header className="flex flex-wrap items-end justify-between gap-6">
+        <div className="min-w-0">
+          <h1 className="display text-h1 leading-[1] text-ink">Release Calendar</h1>
+          <p className="num mt-4 text-lead text-muted">
+            {isLoading ? " " : `${plural(total, kind === "series" ? "premiere" : "release")} ${kind === "series" ? "" : kindLabel} in ${regionName(region)}`}
           </p>
         </div>
         <Segmented
@@ -58,48 +59,56 @@ function Calendar() {
           onChange={(value) => set({ kind: value })}
           options={[{ value: "theatrical", label: "Cinemas" }, { value: "digital", label: "Streaming" }, { value: "series", label: "Series" }]}
         />
-      </div>
+      </header>
 
-      <div className="mt-6 flex items-center gap-2">
-        <IconButton label="Previous month" onClick={() => set({ month: shiftMonth(month, -1) })}><ChevronLeft size={18} /></IconButton>
-        <span className="min-w-40 text-center text-base font-medium text-ink">{monthLabel(month)}</span>
-        <IconButton label="Next month" onClick={() => set({ month: shiftMonth(month, 1) })}><ChevronRight size={18} /></IconButton>
+      <div className="mt-10 flex flex-wrap items-center gap-3 border-b border-line pb-6">
+        <IconButton label="Previous month" variant="overlay" onClick={() => set({ month: shiftMonth(month, -1) })}><ChevronLeft size={18} aria-hidden="true" /></IconButton>
+        <h2 className="display min-w-[9ch] text-center text-[clamp(1.75rem,1.3rem+1.3vw,2.375rem)] text-ink" aria-live="polite">{monthLabel(month)}</h2>
+        <IconButton label="Next month" variant="overlay" onClick={() => set({ month: shiftMonth(month, 1) })}><ChevronRight size={18} aria-hidden="true" /></IconButton>
         {month !== currentMonth() && (
-          <button type="button" onClick={() => set({ month: currentMonth() })} className="ml-2 text-sm text-muted hover:text-ink">This month</button>
+          <Button variant="ghost" size="sm" onClick={() => set({ month: currentMonth() })}>This Month</Button>
         )}
       </div>
 
       <div className="mt-8">
-        {isLoading && <div className="space-y-4">{Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="h-28 w-full" />)}</div>}
+        {isLoading && <div className="space-y-4">{Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="h-28 w-full rounded-panel" />)}</div>}
         {isError && <ErrorState message="The calendar didn't load. Months with many releases can take a few seconds the first time." onRetry={refetch} />}
         {data && !data.days.length && (
-          <EmptyState title="Nothing dated yet">TMDB has no {kindLabel} dated for {regionName(region)} this month. Try streaming, or another month.</EmptyState>
+          <EmptyState icon={CalendarDays} title="Nothing dated yet">TMDB has no {kindLabel} dated for {regionName(region)} this month. Try streaming, or another month.</EmptyState>
         )}
 
-        <ol className="space-y-8">
-          {data?.days.map((day) => (
-            <li key={day.date} aria-labelledby={`day-${day.date}`}>
-              <h2 id={`day-${day.date}`} className={`flex items-baseline gap-3 text-base font-semibold ${day.date === today ? "text-accent" : "text-ink"}`}>
-                {dayLabel(day.date)}
-                {day.date === today && <span className="text-[13px] font-normal">Today</span>}
-                {day.date < today && <span className="text-[13px] font-normal text-faint">Out now</span>}
-              </h2>
-              <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-                {day.items.map((item) => (
-                  <li key={item.id} className="flex items-center gap-3 rounded-lg bg-surface p-2.5 pr-3">
-                    <Link to={titleHref(item)} className="w-12 flex-none overflow-hidden rounded-[3px]"><Poster path={item.posterPath} title={item.title} sizes="48px" /></Link>
-                    <div className="min-w-0 flex-1">
-                      <Link to={titleHref(item)} className="block truncate text-[15px] text-ink hover:text-accent">{item.title}</Link>
-                      <p className="truncate text-[13px] text-faint">
-                        {[genreNames(item.genreIds, genres).slice(0, 2).join(", "), item.originalLanguage?.toUpperCase()].filter(Boolean).join(" · ")}
-                      </p>
-                    </div>
-                    <WishlistButton title={item} showLabel={false} />
-                  </li>
-                ))}
-              </ul>
-            </li>
-          ))}
+        <ol className="divide-y divide-line">
+          {data?.days.map((day) => {
+            const isToday = day.date === today;
+            const date = new Date(`${day.date}T00:00:00`);
+            return (
+              <li key={day.date} aria-labelledby={`day-${day.date}`} className="grid gap-4 py-8 md:grid-cols-[9rem_minmax(0,1fr)] md:gap-8">
+                <div className="md:sticky md:top-24 md:self-start">
+                  <h3 id={`day-${day.date}`} className="flex items-baseline gap-3 md:block">
+                    <span className={`display num block text-[3rem] leading-none md:text-[3.75rem] ${isToday ? "text-accent" : "text-ink"}`}>{date.getDate()}</span>
+                    <span className="block text-ui text-muted md:mt-2">{weekday(date)}</span>
+                    <span className="sr-only">{dayLabel(day.date)}</span>
+                  </h3>
+                  {isToday && <p className="mt-1 text-[13px] font-medium text-accent">Today</p>}
+                  {day.date < today && <p className="mt-1 text-[13px] text-faint">Out now</p>}
+                </div>
+                <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  {day.items.map((item) => (
+                    <li key={item.id} className="flex items-center gap-4 rounded-panel bg-surface p-3 pr-4 transition-colors can-hover:hover:bg-raised">
+                      <Link to={titleHref(item)} className="w-14 flex-none overflow-hidden rounded-[6px]" tabIndex={-1} aria-hidden="true"><Poster path={item.posterPath} title={item.title} sizes="56px" /></Link>
+                      <div className="min-w-0 flex-1">
+                        <Link to={titleHref(item)} className="block truncate text-[15px] font-medium text-ink can-hover:hover:text-accent">{item.title}</Link>
+                        <p className="truncate text-[13px] text-faint">
+                          {[genreNames(item.genreIds, genres).slice(0, 2).join(", "), item.originalLanguage?.toUpperCase()].filter(Boolean).join(" · ")}
+                        </p>
+                      </div>
+                      <WishlistButton title={item} showLabel={false} />
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            );
+          })}
         </ol>
       </div>
     </div>

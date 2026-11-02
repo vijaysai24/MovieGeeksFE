@@ -1,4 +1,5 @@
-import { useId } from "react";
+import { useId, useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
 const surface = "rounded-control bg-raised px-3.5 text-[15px] text-ink placeholder:text-faint ring-1 ring-inset ring-transparent transition-shadow can-hover:hover:ring-control focus:outline-none focus:ring-ink/70";
 const control = `w-full ${surface}`;
@@ -22,6 +23,25 @@ export function Field({ label, hint, error, children, className = "" }) {
 
 export function TextInput({ className = "", ...props }) {
   return <input className={`${control} h-11 ${className}`} {...props} />;
+}
+
+// A password field with a show/hide toggle, so long passwords can be checked before submitting.
+export function PasswordInput({ className = "", ...props }) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <div className="relative">
+      <input type={visible ? "text" : "password"} spellCheck={false} autoCapitalize="none" className={`${control} h-11 pr-12 ${className}`} {...props} />
+      <button
+        type="button"
+        onClick={() => setVisible((value) => !value)}
+        aria-label={visible ? "Hide password" : "Show password"}
+        aria-pressed={visible}
+        className="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-faint can-hover:hover:text-ink"
+      >
+        {visible ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
+      </button>
+    </div>
+  );
 }
 
 export function TextArea({ className = "", ...props }) {
