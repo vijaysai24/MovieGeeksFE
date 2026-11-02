@@ -1,44 +1,45 @@
 import { useQuery } from "@tanstack/react-query";
 import { catalogApi } from "../../Services/catalogService";
-import { libraryApi } from "../../Services/userService";
+import { identityApi, libraryApi } from "../../Services/userService";
+import { formatDayMonth } from "../../Services/format";
 import { useAuth } from "../../Context/AuthContext";
 import { useRegion } from "../../Hooks/useRegion";
 import Hero from "../Home/Hero";
+import NowShowingBoard from "../Home/NowShowingBoard";
 import TonightsPick from "../Home/TonightsPick";
-import Programme from "../Home/Programme";
-import GemsGallery from "../Home/GemsGallery";
-import IdentityFeatures from "../Home/IdentityFeatures";
-import JoinField from "../Home/JoinField";
+import ComingSoon from "../Home/ComingSoon";
+import HiddenGems from "../Home/HiddenGems";
+import IdentityBoard from "../Home/IdentityBoard";
+import ClosingQuestion from "../Home/ClosingQuestion";
 import { PosterRow } from "../Movie/PosterRow";
 import { ErrorState } from "../UI/States";
 
-// For members: what's already on their shelves, before anything new.
-function MemberShelf() {
+const reasonLine = (item) => {
+  if (item.reason?.type === "SEVERAL") return `Like ${item.reason.seedCount} of your favourites`;
+  if (item.reason?.because) return `Because you liked ${item.reason.because.title}`;
+  return null;
+};
+
+// Members see their own shelves first: what they are part-way through, what they meant to watch,
+// and what we think they will love next, each with its reason.
+function MemberRows() {
   const watching = useQuery({ queryKey: ["me", "library", "WATCHING", "home"], queryFn: () => libraryApi.library({ status: "WATCHING", limit: 20 }) });
   const planned = useQuery({ queryKey: ["me", "library", "PLAN_TO_WATCH", "home"], queryFn: () => libraryApi.library({ status: "PLAN_TO_WATCH", limit: 20 }) });
-  const wishlist = useQuery({ queryKey: ["me", "library", "wishlist", "home"], queryFn: () => libraryApi.wishlistItems({ limit: 20 }) });
-
-  const rows = [
-    { title: "Still watching", query: watching, href: "/watchlist?tab=WATCHING" },
-    { title: "Up next on your watchlist", query: planned, href: "/watchlist?tab=PLAN_TO_WATCH" },
-    { title: "Your wishlist", query: wishlist, href: "/watchlist" },
-  ].filter((row) => row.query.isLoading || row.query.data?.items.length);
-
-  if (!rows.length) return null;
+  const recs = useQuery({ queryKey: ["me", "recommendations"], queryFn: identityApi.recommendations, staleTime: 10 * 60 * 1000 });
 
   return (
-    <section aria-label="Your shelves" className="mx-auto mt-[clamp(120px,14vw,200px)] max-w-[1440px] space-y-14 px-4 md:px-8">
-      {rows.map((row) => (
-        <PosterRow
-          key={row.title}
-          title={row.title}
-          items={row.query.data?.items}
-          loading={row.query.isLoading}
-          href={row.href}
-          ratingOf={(item) => item.userRating}
-        />
-      ))}
-    </section>
+    <>
+      <PosterRow
+        className="page section-gap"
+        title="Picked for You"
+        subtitle={recs.data?.basis === "history" ? "From what you've loved and logged" : "Rate a few films and these get sharper"}
+        items={recs.data?.items}
+        loading={recs.isLoading}
+        sublineOf={(item) => reasonLine(item) && <span className="truncate">{reasonLine(item)}</span>}
+      />
+      <PosterRow className="page section-gap" title="Still Watching" items={watching.data?.items} loading={watching.isLoading} href="/watchlist?tab=WATCHING" />
+      <PosterRow className="page section-gap" title="Up Next" subtitle="On your watchlist" items={planned.data?.items} loading={planned.isLoading} href="/watchlist?tab=PLAN_TO_WATCH" />
+    </>
   );
 }
 
@@ -56,40 +57,49 @@ function Home() {
 
   return (
     <>
-      <Hero spotlight={home.data?.spotlight} loading={loading} region={region} />
+      <Hero spotlight={home.data?.spotlight} loading={loading} />
 
       {home.isError && (
-        <div className="mx-auto max-w-[1440px] px-4 pt-8 md:px-8">
-          <ErrorState message="Today's listings didn't load. The rest of Cinefile still works." onRetry={() => home.refetch()} />
+        <div className="page pt-10">
+          <ErrorState message="Today's listings didn't load. Your library and diary still work." onRetry={() => home.refetch()} />
         </div>
       )}
 
-      {isMember && <MemberShelf />}
+      {isMember && <MemberRows />}
 
-      <TonightsPick region={region} />
+      <PosterRow className="page section-gap" title="Trending This Week" items={sections.trending} loading={loading} href="/discover?list=trending" />
 
-      <Programme
+      <NowShowingBoard
         inCinemas={sections.in_theatres}
-        comingSoon={sections.upcoming}
         newOnStreaming={sections.new_on_streaming}
+        comingToStreaming={sections.coming_to_streaming}
         loading={loading}
         region={region}
       />
 
-      <GemsGallery items={sections.hidden_gems} loading={loading} />
+      <TonightsPick region={region} />
 
-      <section aria-label="More to explore" className="mx-auto mt-[clamp(120px,14vw,200px)] max-w-[1440px] space-y-14 px-4 md:px-8">
-        <PosterRow title="Trending this week" items={sections.trending} loading={loading} href="/discover?list=trending" />
-        <PosterRow title="Series everyone is watching" items={sections.popular_tv} loading={loading} href="/tvshows" />
-        <PosterRow title="All-time greats" items={sections.top_rated} loading={loading} href="/discover?list=top_rated" />
-      </section>
+      <ComingSoon items={sections.upcoming} loading={loading} />
 
-      {!isMember && (
-        <>
-          <IdentityFeatures films={sections.top_rated} region={region} />
-          <JoinField />
-        </>
-      )}
+      <PosterRow
+        className="page section-gap"
+        title="New on Streaming"
+        subtitle="Arrived on services in the last two months"
+        items={sections.new_on_streaming}
+        loading={loading}
+        href="/movies/ott"
+        badgeOf={(item) => item.releaseDate && formatDayMonth(item.releaseDate)}
+      />
+
+      <PosterRow className="page section-gap" title="Series Everyone Is Watching" items={sections.popular_tv} loading={loading} href="/tvshows" />
+
+      <HiddenGems items={sections.hidden_gems} />
+
+      <PosterRow className="page section-gap" title="All-Time Greats" subtitle="The highest-rated films with a settled reputation" items={sections.top_rated} loading={loading} href="/discover?list=top_rated" />
+
+      {!isMember && <IdentityBoard films={sections.top_rated} region={region} />}
+
+      <ClosingQuestion />
     </>
   );
 }

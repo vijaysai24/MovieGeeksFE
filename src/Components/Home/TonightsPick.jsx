@@ -3,29 +3,25 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Shuffle } from "lucide-react";
 import { catalogApi } from "../../Services/catalogService";
-import { posterSrcSet, tmdbImage, titleHref } from "../../Services/images";
+import { backdropSrcSet, posterSrcSet, tmdbImage, titleHref } from "../../Services/images";
 import { genreNames, useGenres, useLanguages, COMMON_LANGUAGES } from "../../Hooks/useCatalogReference";
+import { titleKey, useLibraryKeys, useQuickWishlist } from "../../Hooks/useLibraryKeys";
 import { Button } from "../UI/Button";
 import { Skeleton } from "../UI/States";
-import { WishlistButton } from "../Movie/WishlistButton";
+import { Reveal } from "../UI/Reveal";
 
 const DECADES = [
-  { value: "", label: "any decade" },
-  { value: "2020", label: "the 2020s" },
-  { value: "2010", label: "the 2010s" },
-  { value: "2000", label: "the 2000s" },
-  { value: "1990", label: "the 1990s" },
-  { value: "1980", label: "the 1980s" },
-  { value: "1970", label: "the 1970s" },
-  { value: "1950", label: "before 1970" },
+  ["", "any decade"],
+  ["2020", "the 2020s"],
+  ["2010", "the 2010s"],
+  ["2000", "the 2000s"],
+  ["1990", "the 1990s"],
+  ["1980", "the 1980s"],
+  ["1970", "the 1970s"],
+  ["1950", "before 1970"],
 ];
 
-const RATINGS = [
-  { value: "", label: "anything" },
-  { value: "6", label: "6 or more" },
-  { value: "7", label: "7 or more" },
-  { value: "8", label: "8 or more" },
-];
+const RATINGS = [["", "anything"], ["6", "6 or more"], ["7", "7 or more"], ["8", "8 or more"]];
 
 // A select that reads as a word in the sentence it sits in.
 function InlineSelect({ label, value, onChange, children }) {
@@ -35,7 +31,7 @@ function InlineSelect({ label, value, onChange, children }) {
         aria-label={label}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="cursor-pointer appearance-none rounded-full bg-raised py-0.5 pl-3 pr-8 text-accent transition-colors hover:bg-nested focus:outline-none focus-visible:outline-2"
+        className="cursor-pointer appearance-none rounded-full bg-raised py-0.5 pl-3.5 pr-8 text-accent transition-colors can-hover:hover:bg-nested focus:outline-none focus-visible:outline-2"
       >
         {children}
       </select>
@@ -52,9 +48,13 @@ const decadeRange = (decade) => {
   return { yearFrom: Number(decade), yearTo: Number(decade) + 9 };
 };
 
+// The live part of the home page: say what you are in the mood for, get one real film back.
+// Members never get something they have already seen or saved.
 function TonightsPick({ region }) {
   const { data: genres = [] } = useGenres();
   const { data: languages = [] } = useLanguages();
+  const keys = useLibraryKeys();
+  const toggleWishlist = useQuickWishlist();
   const [mediaType, setMediaType] = useState("movie");
   const [genre, setGenre] = useState("");
   const [language, setLanguage] = useState("");
@@ -73,107 +73,112 @@ function TonightsPick({ region }) {
 
   const genreOptions = genres.filter((item) => item.mediaTypes.includes(mediaType));
   const languageOptions = COMMON_LANGUAGES.map((code) => languages.find((item) => item.code === code)).filter(Boolean);
+  const wishlisted = pick ? keys.wishlist.has(titleKey(pick)) : false;
 
   return (
-    <section className="relative grid md:grid-cols-2" aria-labelledby="pick-title">
-      <div className="relative order-1 flex flex-col bg-ground px-5 pb-10 pt-[12svh] md:min-h-[90svh] md:px-[8.33vw] md:pb-28 md:pt-[27svh]">
-        <p className="max-w-[34ch] text-[clamp(1.25rem,1rem+0.8vw,1.5rem)] leading-[1.9] text-ink">
-          Find me {" "}
-          <InlineSelect label="Genre" value={genre} onChange={setGenre}>
-            <option value="">anything good</option>
-            {genreOptions.map((item) => <option key={item.id} value={item.id}>{item.name.toLowerCase()}</option>)}
-          </InlineSelect>{" "}
-          to watch as a{" "}
-          <InlineSelect label="Film or series" value={mediaType} onChange={(value) => { setMediaType(value); setGenre(""); }}>
-            <option value="movie">film</option>
-            <option value="tv">series</option>
-          </InlineSelect>
-          , in{" "}
-          <InlineSelect label="Language" value={language} onChange={setLanguage}>
-            <option value="">any language</option>
-            {languageOptions.map((item) => <option key={item.code} value={item.code}>{item.name}</option>)}
-          </InlineSelect>
-          , from{" "}
-          <InlineSelect label="Decade" value={decade} onChange={setDecade}>
-            {DECADES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
-          </InlineSelect>
-          , rated{" "}
-          <InlineSelect label="Minimum TMDB rating" value={ratingMin} onChange={setRatingMin}>
-            {RATINGS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
-          </InlineSelect>
-          .
-        </p>
-        <div className="mt-8">
-          <Button variant="secondary" onClick={() => setSpin((value) => value + 1)} disabled={isFetching}>
-            <Shuffle size={16} aria-hidden="true" />
-            {isFetching ? "Looking..." : "Show me another"}
-          </Button>
+    <section id="tonight" className="page section-gap" aria-labelledby="pick-title">
+      <div className="grid gap-12 lg:grid-cols-12 lg:gap-8">
+        <div className="lg:col-span-5">
+          <Reveal>
+            <h2 id="pick-title" className="display text-h2 text-ink">Tonight&rsquo;s Pick</h2>
+          </Reveal>
+          <Reveal index={1}>
+            <p className="mt-8 max-w-[30ch] text-[clamp(1.25rem,1rem+0.8vw,1.625rem)] leading-[1.9] text-ink">
+              Find me{" "}
+              <InlineSelect label="Genre" value={genre} onChange={setGenre}>
+                <option value="">anything good</option>
+                {genreOptions.map((item) => <option key={item.id} value={item.id}>{item.name.toLowerCase()}</option>)}
+              </InlineSelect>{" "}
+              as a{" "}
+              <InlineSelect label="Film or series" value={mediaType} onChange={(value) => { setMediaType(value); setGenre(""); }}>
+                <option value="movie">film</option>
+                <option value="tv">series</option>
+              </InlineSelect>
+              , in{" "}
+              <InlineSelect label="Language" value={language} onChange={setLanguage}>
+                <option value="">any language</option>
+                {languageOptions.map((item) => <option key={item.code} value={item.code}>{item.name}</option>)}
+              </InlineSelect>
+              , from{" "}
+              <InlineSelect label="Decade" value={decade} onChange={setDecade}>
+                {DECADES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              </InlineSelect>
+              , rated{" "}
+              <InlineSelect label="Minimum TMDB rating" value={ratingMin} onChange={setRatingMin}>
+                {RATINGS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              </InlineSelect>
+              .
+            </p>
+            <Button variant="outline" className="mt-8" onClick={() => setSpin((value) => value + 1)} disabled={isFetching}>
+              <Shuffle size={16} aria-hidden="true" />
+              {isFetching ? "Looking…" : "Show Me Another"}
+            </Button>
+          </Reveal>
         </div>
-      </div>
 
-      <div className="relative order-3 flex min-h-[62svh] items-start bg-light px-5 pb-16 pt-12 text-light-ink md:min-h-[90svh] md:px-[6vw] md:pb-28 md:pt-[27svh]">
-        <div data-ui aria-live="polite" className="w-full max-w-[520px]">
+        <div className="lg:col-span-7" aria-live="polite">
           {isError && (
-            <p className="text-base">
-              The film archive didn't answer.{" "}
-              <button type="button" onClick={() => refetch()} className="font-semibold underline underline-offset-4">Try again</button>
+            <p className="text-read text-muted">
+              The film archive didn&rsquo;t answer.{" "}
+              <button type="button" onClick={() => refetch()} className="font-medium text-ink underline underline-offset-4">Try again</button>
             </p>
           )}
-          {!isError && pick === undefined && (
-            <div className="flex gap-5">
-              <Skeleton className="h-[240px] w-[160px] flex-none bg-[#d6d4cf]!" />
-              <div className="flex-1 space-y-3 pt-2">
-                <Skeleton className="h-8 w-4/5 bg-[#d6d4cf]!" />
-                <Skeleton className="h-4 w-1/2 bg-[#d6d4cf]!" />
-              </div>
-            </div>
-          )}
+          {!isError && pick === undefined && <Skeleton className="aspect-[16/10] w-full rounded-panel" />}
           {!isError && pick === null && (
-            <p className="text-lg">Nothing matches all of that. Loosen one of the words on the left.</p>
+            <p className="text-read text-muted">Nothing matches all of that. Loosen one of the words in the sentence.</p>
           )}
           {pick && (
-            <article className="flex flex-col gap-5 sm:flex-row md:flex-col lg:flex-row">
-              <Link to={titleHref(pick)} className="w-[160px] flex-none">
-                <img
-                  src={tmdbImage(pick.posterPath, "w342")}
-                  srcSet={posterSrcSet(pick.posterPath)}
-                  sizes="160px"
-                  alt={`${pick.title} poster`}
-                  width="160"
-                  height="240"
-                  className="aspect-[2/3] w-[160px] rounded-[4px] bg-[#d6d4cf] object-cover"
-                />
-              </Link>
-              <div className="min-w-0">
-                <h3 className="display text-[2rem] leading-[1.02]">
-                  <Link to={titleHref(pick)} className="hover:underline hover:underline-offset-4">{pick.title}</Link>
-                </h3>
-                <p className="num mt-2 text-base text-[#4a4a4a]">
-                  {[pick.year, genreNames(pick.genreIds, genres).slice(0, 2).join(", "), pick.rating && `TMDB ${pick.rating.toFixed(1)}`]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </p>
-                <p className="mt-4 line-clamp-4 text-base leading-relaxed text-[#2a2a2a]">{pick.overview}</p>
-                <div className="mt-5 flex flex-wrap items-center gap-3">
-                  <Link to={titleHref(pick)} className="inline-flex h-9 items-center rounded-full bg-light-ink px-4 text-sm font-medium text-light transition-transform active:scale-[0.97]">
-                    Open {pick.mediaType === "tv" ? "series" : "film"}
+            <article className="relative overflow-hidden rounded-panel bg-surface">
+              {pick.backdropPath && (
+                <div className="relative aspect-[16/8]">
+                  <img
+                    src={tmdbImage(pick.backdropPath, "w1280")}
+                    srcSet={backdropSrcSet(pick.backdropPath)}
+                    sizes="(min-width: 1024px) 55vw, 100vw"
+                    alt=""
+                    width="1280"
+                    height="640"
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                  <div className="scrim-bottom absolute inset-0" aria-hidden="true" />
+                </div>
+              )}
+              <div className={`relative flex gap-5 p-5 md:p-7 ${pick.backdropPath ? "-mt-24" : ""}`}>
+                <Link to={titleHref(pick)} className="w-24 flex-none overflow-hidden rounded-poster shadow-poster md:w-32">
+                  <img
+                    src={tmdbImage(pick.posterPath, "w342")}
+                    srcSet={posterSrcSet(pick.posterPath)}
+                    sizes="128px"
+                    alt={`${pick.title} poster`}
+                    width="128"
+                    height="192"
+                    className="aspect-[2/3] w-full bg-raised object-cover"
+                  />
+                </Link>
+                <div className="min-w-0 self-end">
+                  <h3 className="display text-[clamp(1.75rem,1.4rem+1vw,2.5rem)] leading-[1.02] text-ink">
+                    <Link to={titleHref(pick)} className="can-hover:hover:text-accent">{pick.title}</Link>
+                  </h3>
+                  <p className="num mt-2 text-[15px] text-muted">
+                    {[pick.year, genreNames(pick.genreIds, genres).slice(0, 2).join(", "), pick.rating && `TMDB ${pick.rating.toFixed(1)}`].filter(Boolean).join(" · ")}
+                  </p>
+                </div>
+              </div>
+              <div className="px-5 pb-6 md:px-7 md:pb-7">
+                <p className="line-clamp-3 max-w-[64ch] text-[15px] leading-relaxed text-muted">{pick.overview}</p>
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <Link to={titleHref(pick)} className="inline-flex h-10 items-center rounded-full bg-ink px-5 text-[15px] font-medium text-ground transition-transform active:scale-[0.97]">
+                    Open {pick.mediaType === "tv" ? "Series" : "Film"}
                   </Link>
-                  <WishlistButton title={pick} tone="light" />
+                  <Button variant={wishlisted ? "primary" : "outline"} aria-pressed={wishlisted} onClick={() => toggleWishlist(pick, wishlisted)}>
+                    {wishlisted ? "On Your Wishlist" : "Add to Wishlist"}
+                  </Button>
                 </div>
               </div>
             </article>
           )}
         </div>
       </div>
-
-      {/* One heading split across the edge: its first word on the dark field, its last on the light. */}
-      <h2
-        id="pick-title"
-        className="display order-2 bg-ground px-5 pb-10 text-[clamp(2.75rem,13vw,5rem)] md:pointer-events-none md:absolute md:z-10 md:inset-x-0 md:bottom-8 md:grid md:grid-cols-2 md:bg-transparent md:pb-0 md:pl-[8.33vw] md:pr-[6vw] md:text-[clamp(2.5rem,5vw,5rem)]"
-      >
-        <span className="text-ink">Tonight's</span>{" "}
-        <span className="text-ink md:text-right md:text-light-ink">pick</span>
-      </h2>
     </section>
   );
 }
