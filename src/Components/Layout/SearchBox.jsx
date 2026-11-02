@@ -16,7 +16,8 @@ const sublineOf = (item) => {
 };
 
 // Combobox search: suggestions as you type, arrows to move, Enter to open one or see all results.
-export function SearchBox({ autoFocus = false, onNavigate, className = "" }) {
+export function SearchBox({ autoFocus = false, onNavigate, className = "", size = "md" }) {
+  const large = size === "lg";
   const navigate = useNavigate();
   const listId = useId();
   const inputRef = useRef(null);
@@ -69,7 +70,7 @@ export function SearchBox({ autoFocus = false, onNavigate, className = "" }) {
   return (
     <div className={`relative ${className}`}>
       <label htmlFor={`${listId}-input`} className="sr-only">Search films, series and people</label>
-      <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-faint" aria-hidden="true" />
+      <Search size={large ? 20 : 16} className={`pointer-events-none absolute top-1/2 -translate-y-1/2 text-faint ${large ? "left-5" : "left-3.5"}`} aria-hidden="true" />
       <input
         ref={inputRef}
         id={`${listId}-input`}
@@ -79,8 +80,10 @@ export function SearchBox({ autoFocus = false, onNavigate, className = "" }) {
         aria-controls={listId}
         aria-autocomplete="list"
         aria-activedescendant={active >= 0 ? `${listId}-${active}` : undefined}
+        name="q"
         autoComplete="off"
-        placeholder="Search films, series, people"
+        spellCheck={false}
+        placeholder="Search films, series, people…"
         value={query}
         onChange={(event) => {
           setQuery(event.target.value);
@@ -89,7 +92,7 @@ export function SearchBox({ autoFocus = false, onNavigate, className = "" }) {
         onFocus={() => setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
         onKeyDown={onKeyDown}
-        className="h-9 w-full rounded-full bg-raised pl-10 pr-9 text-sm text-ink placeholder:text-faint ring-1 ring-inset ring-transparent transition-shadow hover:ring-control focus:outline-none focus:ring-ink/60 [&::-webkit-search-cancel-button]:hidden"
+        className={`w-full rounded-full bg-raised text-ink placeholder:text-faint ring-1 ring-inset ring-transparent transition-shadow can-hover:hover:ring-control focus:outline-none focus:ring-ink/60 [&::-webkit-search-cancel-button]:hidden ${large ? "h-14 pl-14 pr-12 text-[17px]" : "h-9 pl-10 pr-9 text-sm"}`}
       />
       {query && (
         <button
@@ -100,14 +103,14 @@ export function SearchBox({ autoFocus = false, onNavigate, className = "" }) {
             setQuery("");
             inputRef.current?.focus();
           }}
-          className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-faint hover:text-ink"
+          className={`absolute top-1/2 -translate-y-1/2 rounded-full p-1.5 text-faint can-hover:hover:text-ink ${large ? "right-4" : "right-2"}`}
         >
-          <X size={14} />
+          <X size={large ? 18 : 14} aria-hidden="true" />
         </button>
       )}
 
       {showList && (
-        <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-50 overflow-hidden rounded-xl bg-surface shadow-[0_20px_48px_rgba(0,0,0,0.65)] md:min-w-[420px]">
+        <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-50 overflow-hidden rounded-panel bg-surface shadow-float ring-1 ring-line md:min-w-[420px]">
           <ul id={listId} role="listbox" aria-label="Suggestions" className="max-h-[70vh] overflow-y-auto py-2">
             {suggestions.map((item, index) => {
               const image = item.mediaType === "person" ? profileImage(item.profilePath, "w92") : tmdbImage(item.posterPath, "w92");
@@ -128,23 +131,23 @@ export function SearchBox({ autoFocus = false, onNavigate, className = "" }) {
                     <span className="h-12 w-8 flex-none rounded-[3px] bg-raised" />
                   )}
                   <span className="min-w-0">
-                    <span className="block truncate text-sm text-ink">{item.title || item.name}</span>
+                    <span className="block truncate text-[15px] text-ink">{item.title || item.name}</span>
                     <span className="block truncate text-[13px] text-faint">{sublineOf(item)}</span>
                   </span>
                 </li>
               );
             })}
             {!suggestions.length && (
-              <li className="px-4 py-3 text-sm text-faint">{isFetching ? "Searching..." : `Nothing matches "${debounced}"`}</li>
+              <li className="px-4 py-3 text-[15px] text-faint">{isFetching ? "Searching…" : `Nothing matches “${debounced}”`}</li>
             )}
           </ul>
           <button
             type="button"
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => go(`/search?q=${encodeURIComponent(query.trim())}`)}
-            className="block w-full bg-raised px-4 py-3 text-left text-sm text-muted hover:text-ink"
+            className="block w-full bg-raised px-4 py-3 text-left text-[15px] text-muted can-hover:hover:text-ink"
           >
-            See all results for "{query.trim()}"
+            See all results for “{query.trim()}”
           </button>
         </div>
       )}

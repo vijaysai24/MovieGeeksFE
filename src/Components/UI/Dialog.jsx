@@ -23,7 +23,7 @@ export function Dialog({ open, onClose, title, children, size = "md", bare = fal
         if (event.target === ref.current) onClose();
       }}
       aria-label={title}
-      className={`m-auto w-[calc(100%-32px)] ${width} overflow-hidden rounded-panel bg-surface p-0 text-ink shadow-float backdrop:bg-black/80`}
+      className={`m-auto max-h-[calc(100dvh-32px)] w-[calc(100%-32px)] ${width} overflow-y-auto overscroll-contain rounded-panel bg-surface p-0 text-ink shadow-float backdrop:bg-black/80`}
     >
       {open && (
         bare ? (
