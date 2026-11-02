@@ -1,91 +1,283 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Play, Scale } from "lucide-react";
+import { Heart, Play, Scale, ExternalLink } from "lucide-react";
 import { catalogApi } from "../../Services/catalogService";
 import { reviewApi } from "../../Services/userService";
-import { tmdbImage, profileImage } from "../../Services/images";
+import { backdropSrcSet, tmdbImage, profileImage } from "../../Services/images";
 import { formatDate, formatLongDate, formatMoney, formatNumber, formatRuntime, plural } from "../../Services/format";
 import { useRegion, regionName } from "../../Hooks/useRegion";
 import { useTitleActions } from "../../Hooks/useTitleActions";
 import { useLanguages } from "../../Hooks/useCatalogReference";
-import { TitleStage, useStageSection } from "../Movie/TitleStage";
 import { TitleActionPanel } from "../Movie/TitleActionPanel";
 import { TitleReviews } from "../Movie/Reviews";
 import { PosterRow } from "../Movie/PosterRow";
+import { Poster } from "../Movie/PosterCard";
 import { Button, LinkButton } from "../UI/Button";
 import { Dialog } from "../UI/Dialog";
+import { Rail } from "../UI/Rail";
+import { SectionHead } from "../UI/Section";
 import { Skeleton, SkeletonText } from "../UI/States";
 import { Reveal } from "../UI/Reveal";
 
-// Long titles step down a size so every title stays on two lines.
+// Long titles step down so every title stays within two lines.
 const titleSize = (title = "") => {
-  if (title.length > 40) return "text-[clamp(2rem,2.6vw,2.5rem)]";
-  if (title.length > 22) return "text-[clamp(2.4rem,3.4vw,3.25rem)]";
-  return "text-[clamp(2.75rem,4.6vw,4.25rem)]";
+  if (title.length > 40) return "text-[clamp(2rem,1.4rem+2vw,3rem)]";
+  if (title.length > 22) return "text-[clamp(2.4rem,1.5rem+3vw,4rem)]";
+  return "text-h1";
 };
 
 const AVAILABILITY = {
-  UPCOMING: (title, region) => `Releases in ${regionName(region)} on ${formatLongDate(title.releaseInfo.theatrical || title.releaseDate)}`,
-  IN_THEATRES: (title, region) => `In cinemas in ${regionName(region)} now`,
-  STREAMING: (title) => `Streaming on ${[...title.providers.stream, ...title.providers.free, ...title.providers.ads].slice(0, 2).map((p) => p.name).join(" and ")}`,
-  RENT_OR_BUY: () => "Available to rent or buy",
-  NOT_AVAILABLE: (title, region) => `Not streaming in ${regionName(region)} yet`,
+  UPCOMING: (title, region) => ({ label: `Opens ${formatDate(title.releaseInfo.theatrical || title.releaseDate)}`, line: `Not out in ${regionName(region)} yet` }),
+  IN_THEATRES: (title, region) => ({ label: "In Cinemas Now", line: `Showing in ${regionName(region)}` }),
+  STREAMING: (title) => ({ label: "Streaming Now", line: `On ${[...title.providers.stream, ...title.providers.free, ...title.providers.ads].slice(0, 2).map((p) => p.name).join(" and ")}` }),
+  RENT_OR_BUY: () => ({ label: "Rent or Buy", line: "Available digitally" }),
+  NOT_AVAILABLE: (title, region) => ({ label: "Not Streaming", line: `No service carries it in ${regionName(region)} yet` }),
 };
 
-function SectionHeading({ id, children }) {
-  return <h2 id={id} className="display text-[clamp(2rem,2.6vw,2.5rem)] text-ink">{children}</h2>;
-}
+const STREAM_KINDS = [
+  ["stream", "With a subscription"],
+  ["free", "Free"],
+  ["ads", "Free with ads"],
+];
 
-function ProviderGroup({ label, providers }) {
-  if (!providers.length) return null;
+function Hero({ title, region, onTrailer }) {
+  const { state, toggleWishlist } = useTitleActions(title);
+  const availability = AVAILABILITY[title.availability](title, region);
+  const meta = [
+    title.year,
+    title.mediaType === "tv" ? `${title.tv.numberOfSeasons} ${title.tv.numberOfSeasons === 1 ? "season" : "seasons"}` : formatRuntime(title.runtime),
+    title.mediaType === "tv" && title.runtime && `${title.runtime}m episodes`,
+    title.releaseInfo.certification,
+    title.genres.map((genre) => genre.name).slice(0, 3).join(", "),
+  ].filter(Boolean);
+
   return (
-    <div>
-      <h3 className="text-sm text-faint">{label}</h3>
-      <ul className="mt-3 flex flex-wrap gap-3">
-        {providers.map((provider) => (
-          <li key={provider.id} className="flex items-center gap-2.5 rounded-full bg-surface py-1 pl-1 pr-4">
-            <img src={tmdbImage(provider.logoPath, "w92")} alt="" width="32" height="32" loading="lazy" className="h-8 w-8 rounded-full object-cover" />
-            <span className="text-sm text-ink">{provider.name}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <section aria-labelledby="title-name">
+      <div className="relative h-[46svh] overflow-hidden bg-surface md:h-[72svh] md:min-h-[520px]">
+        {title.backdropPath && (
+          <img
+            src={tmdbImage(title.backdropPath, "w1280")}
+            srcSet={backdropSrcSet(title.backdropPath)}
+            sizes="100vw"
+            alt={`Still from ${title.title}`}
+            width="1920"
+            height="1080"
+            fetchpriority="high"
+            className="absolute inset-0 h-full w-full object-cover object-[50%_25%]"
+          />
+        )}
+        <div className="scrim-bottom absolute inset-0" aria-hidden="true" />
+        <div className="scrim-left absolute inset-0 hidden md:block" aria-hidden="true" />
+      </div>
+
+      <div className="page relative -mt-28 grid gap-6 md:-mt-64 md:grid-cols-[minmax(0,260px)_minmax(0,1fr)] md:gap-10 lg:grid-cols-[minmax(0,300px)_minmax(0,1fr)]">
+        <div className="w-32 overflow-hidden rounded-poster shadow-poster md:w-full">
+          <Poster path={title.posterPath} title={title.title} eager sizes="(min-width: 768px) 300px, 128px" />
+        </div>
+
+        <div className="min-w-0 md:self-end">
+          <p className="text-ui">
+            <span className="font-medium text-accent">{availability.label}</span>
+            <span className="text-muted"> · {availability.line}</span>
+          </p>
+          <h1 id="title-name" className={`display mt-3 max-w-[18ch] leading-[0.98] text-ink ${titleSize(title.title)}`}>{title.title}</h1>
+          {title.tagline && <p className="display mt-4 max-w-[40ch] text-lead text-muted">{title.tagline}</p>}
+          <p className="num mt-5 text-ui text-muted">{meta.join(" · ")}</p>
+          {title.originalTitle && title.originalTitle !== title.title && (
+            <p className="mt-1 text-[15px] text-faint">Original title: <span lang={title.originalLanguage || undefined}>{title.originalTitle}</span></p>
+          )}
+
+          <div className="mt-7 flex flex-wrap items-center gap-3">
+            {title.trailer && (
+              <Button variant="accent" size="lg" onClick={onTrailer}>
+                <Play size={18} fill="currentColor" aria-hidden="true" />
+                Watch Trailer
+              </Button>
+            )}
+            <Button variant={state.wishlisted ? "primary" : "secondary"} size="lg" onClick={toggleWishlist} aria-pressed={state.wishlisted}>
+              <Heart size={18} fill={state.wishlisted ? "currentColor" : "none"} aria-hidden="true" />
+              {state.wishlisted ? "On Your Wishlist" : "Wishlist"}
+            </Button>
+            <LinkButton to={`/compare?a=${title.mediaType}:${title.id}`} variant="ghost" size="lg">
+              <Scale size={18} aria-hidden="true" />
+              Compare
+            </LinkButton>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 
 function WhereToWatch({ title, region }) {
   const { providers, releaseInfo } = title;
-  const any = providers.stream.length + providers.free.length + providers.ads.length + providers.rent.length + providers.buy.length > 0;
+  const link = providers.link || undefined;
+  const streaming = STREAM_KINDS.flatMap(([key, label]) => providers[key].map((provider) => ({ ...provider, label })));
+  // Rent and buy usually list the same stores, so each store shows once with what it offers.
+  const stores = new Map();
+  for (const [key, verb] of [["rent", "Rent"], ["buy", "Buy"]]) {
+    for (const provider of providers[key]) {
+      const store = stores.get(provider.id) || { ...provider, verbs: [] };
+      store.verbs.push(verb);
+      stores.set(provider.id, store);
+    }
+  }
+  const shops = [...stores.values()];
 
   return (
-    <section aria-labelledby="watch-title" data-stage="backdrop" className="mt-[clamp(112px,9vw,136px)]">
-      <Reveal><SectionHeading id="watch-title">Where to watch</SectionHeading></Reveal>
-      <Reveal index={1}>
-        <p className="mt-3 text-lg text-ink">{AVAILABILITY[title.availability](title, region)}</p>
-        {(releaseInfo.theatrical || releaseInfo.digital) && (
-          <p className="num mt-1 text-[15px] text-muted">
-            {[releaseInfo.theatrical && `In cinemas from ${formatDate(releaseInfo.theatrical)}`, releaseInfo.digital && `on digital from ${formatDate(releaseInfo.digital)}`]
-              .filter(Boolean)
-              .join(", ")}
-          </p>
-        )}
-      </Reveal>
-      <Reveal index={2} className="mt-8 space-y-7">
-        <ProviderGroup label="Stream" providers={[...providers.stream, ...providers.free, ...providers.ads]} />
-        <ProviderGroup label="Rent" providers={providers.rent} />
-        <ProviderGroup label="Buy" providers={providers.buy} />
-        {!any && title.availability !== "UPCOMING" && (
-          <p className="text-[15px] text-muted">No service carries it in {regionName(region)} right now. Add it to your wishlist and check back.</p>
-        )}
-        {providers.link && (
-          <p className="text-[13px] text-faint">
-            Availability from JustWatch.{" "}
-            <a href={providers.link} target="_blank" rel="noreferrer" className="text-muted underline-offset-4 hover:text-ink hover:underline">See all options</a>
-          </p>
-        )}
-      </Reveal>
+    <section aria-labelledby="watch-title">
+      <SectionHead id="watch-title" title="Where to Watch" subtitle={`Availability in ${regionName(region)}, from JustWatch`} />
+      {(releaseInfo.theatrical || releaseInfo.digital) && (
+        <p className="num -mt-2 mb-6 text-[15px] text-muted">
+          {[releaseInfo.theatrical && `In cinemas from ${formatLongDate(releaseInfo.theatrical)}`, releaseInfo.digital && `on digital from ${formatLongDate(releaseInfo.digital)}`].filter(Boolean).join(", ")}
+        </p>
+      )}
+
+      {streaming.length > 0 && (
+        <div>
+          <h3 className="text-ui font-medium text-ink">Stream</h3>
+          <ul className="mt-3 grid gap-3 sm:grid-cols-2">
+            {streaming.map((provider) => (
+              <li key={`${provider.label}:${provider.id}`}>
+                <a href={link} target="_blank" rel="noreferrer" className="group flex items-center gap-4 rounded-panel bg-surface p-3.5 transition-colors can-hover:hover:bg-raised">
+                  <img src={tmdbImage(provider.logoPath, "w154")} alt="" width="48" height="48" loading="lazy" className="h-12 w-12 flex-none rounded-[11px]" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[15px] font-medium text-ink">{provider.name}</span>
+                    <span className="block text-[13px] text-faint">{provider.label}</span>
+                  </span>
+                  <ExternalLink size={15} className="flex-none text-faint transition-colors can-hover:group-hover:text-ink" aria-hidden="true" />
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {shops.length > 0 && (
+        <div className={streaming.length ? "mt-8" : ""}>
+          <h3 className="text-ui font-medium text-ink">Rent or Buy</h3>
+          <ul className="mt-3 flex flex-wrap gap-2">
+            {shops.map((store) => (
+              <li key={store.id}>
+                <a href={link} target="_blank" rel="noreferrer" className="flex h-11 items-center gap-2.5 rounded-full bg-surface pl-1.5 pr-4 transition-colors can-hover:hover:bg-raised">
+                  <img src={tmdbImage(store.logoPath, "w92")} alt="" width="32" height="32" loading="lazy" className="h-8 w-8 rounded-full" />
+                  <span className="text-[14px] text-ink">{store.name}</span>
+                  <span className="text-[13px] text-faint">{store.verbs.join(" · ")}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {!streaming.length && !shops.length && (
+        <p className="rounded-panel bg-surface p-5 text-[15px] text-muted">
+          {title.availability === "UPCOMING"
+            ? "It isn't out yet. Set an alert in Your Take and we'll tell you when it is."
+            : `No service carries it in ${regionName(region)} right now. Set an alert in Your Take to hear when one does.`}
+        </p>
+      )}
     </section>
+  );
+}
+
+function Cast({ title }) {
+  const { crew } = title;
+  const lines = [
+    [title.mediaType === "tv" ? "Created by" : "Directed by", title.mediaType === "tv" ? crew.creators : crew.directors],
+    title.mediaType === "tv" && ["Directed by", crew.directors],
+    ["Written by", crew.writers],
+    ["Music", crew.music],
+    ["Photography", crew.cinematography],
+    ["Produced by", crew.producers.slice(0, 4)],
+  ].filter((line) => line && line[1]?.length);
+
+  const crewList = lines.length > 0 && (
+    <dl className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
+      {lines.map(([label, people]) => (
+        <div key={label}>
+          <dt className="text-[13px] text-faint">{label}</dt>
+          <dd className="mt-1 text-[15px] text-ink">
+            {people.map((person, index) => (
+              <span key={`${person.id}-${index}`}>
+                {index > 0 && ", "}
+                <Link to={`/person/${person.id}`} className="can-hover:hover:text-accent">{person.name}</Link>
+              </span>
+            ))}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
+
+  if (!title.cast.length) {
+    return crewList && (
+      <section aria-labelledby="cast-title">
+        <SectionHead id="cast-title" title="Crew" />
+        {crewList}
+      </section>
+    );
+  }
+
+  return (
+    <div>
+      <Rail id="cast-title" title="Cast and Crew" count={title.cast.length}>
+        {title.cast.map((person) => (
+          <Link key={person.id} to={`/person/${person.id}`} className="group block w-[120px] flex-none snap-start md:w-[136px]">
+            <span className="block overflow-hidden rounded-poster bg-raised">
+              {person.profilePath ? (
+                <img src={profileImage(person.profilePath, "w185")} alt="" width="136" height="204" loading="lazy" className="aspect-[2/3] w-full object-cover transition-transform duration-500 can-hover:group-hover:scale-[1.05]" />
+              ) : (
+                <span className="flex aspect-[2/3] w-full items-end p-3"><span className="display text-xl leading-tight text-muted">{person.name}</span></span>
+              )}
+            </span>
+            <span className="mt-2 block truncate text-[15px] font-medium text-ink can-hover:group-hover:text-accent">{person.name}</span>
+            <span className="block truncate text-[13px] text-faint">{person.character || " "}</span>
+          </Link>
+        ))}
+      </Rail>
+      {crewList && <div className="mt-6">{crewList}</div>}
+    </div>
+  );
+}
+
+function Videos({ title, onPlay }) {
+  if (title.videos.length < 2) return null;
+  return (
+    <Rail id="videos-title" title="Trailers and Clips" count={title.videos.length}>
+      {title.videos.map((video) => (
+        <button key={video.key} type="button" onClick={() => onPlay(video)} className="group block w-[260px] flex-none snap-start text-left md:w-[300px]">
+          <span className="relative block overflow-hidden rounded-poster bg-raised">
+            <img src={`https://i.ytimg.com/vi/${video.key}/hqdefault.jpg`} alt="" width="300" height="169" loading="lazy" className="aspect-video w-full object-cover transition-transform duration-500 can-hover:group-hover:scale-[1.04]" />
+            <span className="absolute inset-0 flex items-center justify-center">
+              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-black/70 text-ink ring-1 ring-inset ring-white/20 transition-transform can-hover:group-hover:scale-110">
+                <Play size={18} fill="currentColor" aria-hidden="true" />
+              </span>
+            </span>
+          </span>
+          <span className="mt-2 block truncate text-[15px] text-ink">{video.name}</span>
+          <span className="block text-[13px] text-faint">{video.type}{video.official ? " · Official" : ""}</span>
+        </button>
+      ))}
+    </Rail>
+  );
+}
+
+function Seasons({ tv }) {
+  if (!tv?.seasons.length) return null;
+  return (
+    <Rail id="seasons-title" title="Seasons" count={tv.seasons.length}>
+      {tv.seasons.map((season) => (
+        <div key={season.seasonNumber} className="w-[136px] flex-none snap-start">
+          <div className="overflow-hidden rounded-poster bg-raised">
+            <Poster path={season.posterPath} title={season.name} sizes="136px" />
+          </div>
+          <p className="mt-2 truncate text-[15px] font-medium text-ink">{season.name}</p>
+          <p className="num text-[13px] text-faint">{plural(season.episodeCount, "episode")} · {season.airDate ? season.airDate.slice(0, 4) : "TBA"}</p>
+        </div>
+      ))}
+    </Rail>
   );
 }
 
@@ -96,150 +288,84 @@ function Ratings({ title }) {
   });
   const max = Math.max(1, ...(community?.distribution || []).map((bin) => bin.count));
   const external = title.externalRatings;
+  const outside = [
+    ["TMDB", external.tmdb && `${external.tmdb.score.toFixed(1)}`, "/10", external.tmdb && `${formatNumber(external.tmdb.votes)} votes`],
+    ["IMDb", external.imdb && `${external.imdb.score.toFixed(1)}`, "/10", external.imdb?.votes && `${formatNumber(external.imdb.votes)} votes`],
+    ["Rotten Tomatoes", external.rottenTomatoes && `${external.rottenTomatoes}`, "%", "Critics"],
+    ["Metacritic", external.metacritic && `${external.metacritic}`, "/100", "Critics"],
+  ].filter(([, value]) => value);
 
   return (
-    <section aria-labelledby="ratings-title" data-stage="poster" className="mt-[clamp(112px,9vw,136px)]">
-      <Reveal><SectionHeading id="ratings-title">Ratings</SectionHeading></Reveal>
-      <div className="mt-8 grid gap-10 sm:grid-cols-[1.25fr_1fr]">
-        <Reveal index={1}>
-          {isLoading ? (
-            <Skeleton className="h-28 w-full" />
-          ) : community.ratingCount ? (
-            <>
-              <p className="num">
-                <span className="text-[2.25rem] font-semibold leading-none text-accent">{community.averageRating.toFixed(1)}</span>
-                <span className="text-base text-faint"> /10</span>
-              </p>
-              <h3 className="mt-1 text-lg font-medium text-ink">
-                Cinefile members <span className="num text-base font-normal text-faint">· {plural(community.ratingCount, "rating")}</span>
-              </h3>
-              <div className="mt-5 flex h-20 items-end gap-1" role="img" aria-label={`Rating spread: ${community.distribution.map((bin) => `${bin.count} gave ${bin.rating}`).join(", ")}`}>
-                {community.distribution.map((bin) => (
-                  <div key={bin.rating} className="flex flex-1 flex-col items-center gap-1.5">
-                    <div className="w-full rounded-t-[2px] bg-accent" style={{ height: `${Math.max(bin.count ? 4 : 0, (bin.count / max) * 64)}px` }} />
-                    <span className="num text-[13px] text-faint">{bin.rating}</span>
-                  </div>
-                ))}
-              </div>
-            </>
-          ) : (
-            <>
-              <h3 className="text-lg font-medium text-ink">Cinefile members</h3>
-              <p className="mt-2 text-base text-muted">No member has rated it yet. Yours would be the first.</p>
-            </>
-          )}
-          {community && (community.watchedCount > 0 || community.wishlistCount > 0) && (
-            <p className="num mt-4 text-[13px] text-faint">
-              {[community.watchedCount && `Watched by ${plural(community.watchedCount, "member")}`, community.wishlistCount && `on ${plural(community.wishlistCount, "wishlist")}`].filter(Boolean).join(", ")}
-            </p>
-          )}
-        </Reveal>
+    <section aria-labelledby="ratings-title" className="rounded-panel bg-surface p-5 md:p-6">
+      <h2 id="ratings-title" className="text-h3 font-semibold text-ink">Ratings</h2>
 
-        <Reveal index={2}>
-          <h3 className="text-lg font-medium text-ink">Elsewhere</h3>
-          <dl className="num mt-3 space-y-3">
-            {[
-              ["TMDB", external.tmdb && `${external.tmdb.score.toFixed(1)} /10`, external.tmdb && `${formatNumber(external.tmdb.votes)} votes`],
-              ["IMDb", external.imdb && `${external.imdb.score.toFixed(1)} /10`, external.imdb?.votes && `${formatNumber(external.imdb.votes)} votes`],
-              ["Rotten Tomatoes", external.rottenTomatoes && `${external.rottenTomatoes}%`, "critics"],
-              ["Metacritic", external.metacritic && `${external.metacritic} /100`, "critics"],
-            ]
-              .filter(([, value]) => value)
-              .map(([source, value, detail]) => (
-                <div key={source} className="flex items-baseline justify-between gap-4">
-                  <dt className="text-[15px] text-muted">{source}</dt>
-                  <dd className="text-right">
-                    <span className="text-[17px] text-ink">{value}</span>
-                    <span className="block text-[13px] text-faint">{detail}</span>
-                  </dd>
+      <div className="mt-5 rounded-control bg-raised p-4">
+        {isLoading ? (
+          <Skeleton className="h-24 w-full" />
+        ) : community?.ratingCount ? (
+          <>
+            <p className="num">
+              <span className="text-[2.25rem] font-semibold leading-none text-accent">{community.averageRating.toFixed(1)}</span>
+              <span className="text-ui text-faint"> /10</span>
+            </p>
+            <h3 className="mt-1 text-[15px] font-medium text-ink">
+              <span translate="no">Cinefile</span> members <span className="num font-normal text-faint">· {plural(community.ratingCount, "rating")}</span>
+            </h3>
+            <div className="mt-4 flex h-14 items-end gap-1" role="img" aria-label={`Rating spread: ${community.distribution.map((bin) => `${bin.count} gave ${bin.rating}`).join(", ")}`}>
+              {community.distribution.map((bin) => (
+                <div key={bin.rating} className="flex flex-1 flex-col items-center gap-1">
+                  <div className="w-full rounded-t-[2px] bg-accent" style={{ height: `${Math.max(bin.count ? 3 : 0, (bin.count / max) * 36)}px` }} />
+                  <span className="num text-[12px] text-faint">{bin.rating}</span>
                 </div>
               ))}
-          </dl>
-          {!external.tmdb && !external.imdb && <p className="text-[15px] text-muted">No outside scores yet.</p>}
-        </Reveal>
+            </div>
+          </>
+        ) : (
+          <>
+            <h3 className="text-[15px] font-medium text-ink"><span translate="no">Cinefile</span> members</h3>
+            <p className="mt-1 text-[15px] text-muted">No member has rated it yet. Yours would be the first.</p>
+          </>
+        )}
       </div>
-    </section>
-  );
-}
 
-function PeopleLine({ label, people }) {
-  if (!people?.length) return null;
-  return (
-    <div className="flex gap-6 py-2">
-      <dt className="w-28 flex-none text-[15px] text-faint">{label}</dt>
-      <dd className="text-[15px] text-ink">
-        {people.map((person, index) => (
-          <span key={`${person.id}-${index}`}>
-            {index > 0 && ", "}
-            <Link to={`/person/${person.id}`} className="hover:text-accent">{person.name}</Link>
-          </span>
-        ))}
-      </dd>
-    </div>
-  );
-}
+      {community && (community.watchedCount > 0 || community.wishlistCount > 0) && (
+        <p className="num mt-3 text-[13px] text-faint">
+          {[community.watchedCount > 0 && `Watched by ${plural(community.watchedCount, "member")}`, community.wishlistCount > 0 && `on ${plural(community.wishlistCount, "wishlist")}`].filter(Boolean).join(", ")}
+        </p>
+      )}
 
-function Credits({ title }) {
-  const [showAll, setShowAll] = useState(false);
-  const cast = showAll ? title.cast : title.cast.slice(0, 10);
-  const { crew } = title;
-
-  return (
-    <section aria-labelledby="credits-title" data-stage="cast" className="mt-[clamp(112px,9vw,136px)]">
-      <Reveal><SectionHeading id="credits-title">Cast and crew</SectionHeading></Reveal>
-      <Reveal index={1}>
-        <dl className="mt-6">
-          <PeopleLine label={title.mediaType === "tv" ? "Created by" : "Directed by"} people={title.mediaType === "tv" ? crew.creators : crew.directors} />
-          {title.mediaType === "tv" && <PeopleLine label="Directed by" people={crew.directors} />}
-          <PeopleLine label="Written by" people={crew.writers} />
-          <PeopleLine label="Produced by" people={crew.producers.slice(0, 4)} />
-          <PeopleLine label="Music" people={crew.music} />
-          <PeopleLine label="Photography" people={crew.cinematography} />
+      {outside.length > 0 ? (
+        <dl className="num mt-4 grid grid-cols-2 gap-3">
+          {outside.map(([source, value, unit, detail]) => (
+            <div key={source} className="rounded-control bg-raised p-3.5">
+              <dt className="text-[13px] text-faint">{source}</dt>
+              <dd className="mt-1">
+                <span className="text-xl font-semibold text-ink">{value}</span>
+                <span className="text-[13px] text-faint">{unit}</span>
+                <span className="block text-[12px] text-faint">{detail}</span>
+              </dd>
+            </div>
+          ))}
         </dl>
-      </Reveal>
-      {title.cast.length > 0 && (
-        <Reveal index={2}>
-          <ul className="mt-8 grid gap-x-6 gap-y-4 sm:grid-cols-2">
-            {cast.map((person) => (
-              <li key={person.id}>
-                <Link to={`/person/${person.id}`} className="group flex items-center gap-3">
-                  {person.profilePath ? (
-                    <img src={profileImage(person.profilePath, "w185")} alt="" width="48" height="48" loading="lazy" className="h-12 w-12 flex-none rounded-full bg-raised object-cover" />
-                  ) : (
-                    <span className="h-12 w-12 flex-none rounded-full bg-raised" aria-hidden="true" />
-                  )}
-                  <span className="min-w-0">
-                    <span className="block truncate text-[15px] text-ink group-hover:text-accent">{person.name}</span>
-                    <span className="block truncate text-[13px] text-faint">{person.character || " "}</span>
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-          {title.cast.length > 10 && (
-            <Button variant="ghost" size="sm" onClick={() => setShowAll((value) => !value)} className="mt-4 -ml-3.5">
-              {showAll ? "Show fewer" : `Show all ${title.cast.length} cast`}
-            </Button>
-          )}
-        </Reveal>
+      ) : (
+        <p className="mt-4 text-[15px] text-muted">No outside scores yet.</p>
       )}
     </section>
   );
 }
 
-function Details({ title, region }) {
+function Facts({ title, region }) {
   const { data: languages = [] } = useLanguages();
   const language = languages.find((item) => item.code === title.originalLanguage)?.name || title.originalLanguage?.toUpperCase();
   const tv = title.tv;
-
   const rows = [
     ["Released", title.releaseDate && formatLongDate(title.releaseDate)],
     tv && ["Last aired", tv.lastAirDate && formatLongDate(tv.lastAirDate)],
-    tv?.nextEpisode && ["Next episode", `S${tv.nextEpisode.seasonNumber} E${tv.nextEpisode.episodeNumber} on ${formatLongDate(tv.nextEpisode.airDate)}`],
-    tv && ["Seasons", `${tv.numberOfSeasons} seasons, ${formatNumber(tv.numberOfEpisodes)} episodes`],
+    tv?.nextEpisode && ["Next episode", `S${tv.nextEpisode.seasonNumber} E${tv.nextEpisode.episodeNumber}, ${formatLongDate(tv.nextEpisode.airDate)}`],
+    tv && ["Episodes", `${formatNumber(tv.numberOfEpisodes)} across ${tv.numberOfSeasons} seasons`],
     tv && ["Network", tv.networks.map((network) => network.name).join(", ")],
     ["Status", title.status],
-    ["Language", language],
+    ["Original language", language],
     ["Spoken", title.languages.join(", ")],
     ["Countries", title.countries.join(", ")],
     ["Budget", formatMoney(title.budget)],
@@ -248,52 +374,30 @@ function Details({ title, region }) {
   ].filter((row) => row && row[1]);
 
   return (
-    <section aria-labelledby="details-title" data-stage="backdrop" className="mt-[clamp(112px,9vw,136px)]">
-      <Reveal><SectionHeading id="details-title">Details</SectionHeading></Reveal>
-      <Reveal index={1}>
-        <dl className="num mt-6 grid gap-x-8 gap-y-4 sm:grid-cols-2">
-          {rows.map(([label, value]) => (
-            <div key={label}>
-              <dt className="text-[13px] text-faint">{label}</dt>
-              <dd className="mt-0.5 text-[15px] text-ink">{value}</dd>
-            </div>
-          ))}
-        </dl>
-      </Reveal>
-      {tv?.seasons.length > 0 && (
-        <Reveal index={2}>
-          <h3 className="mt-10 text-sm text-faint">Seasons</h3>
-          <ul className="mt-3 space-y-3">
-            {tv.seasons.map((season) => (
-              <li key={season.seasonNumber} className="flex items-center gap-4">
-                {season.posterPath ? (
-                  <img src={tmdbImage(season.posterPath, "w92")} alt="" width="40" height="60" loading="lazy" className="h-[60px] w-10 flex-none rounded-[3px] bg-raised object-cover" />
-                ) : (
-                  <span className="h-[60px] w-10 flex-none rounded-[3px] bg-raised" aria-hidden="true" />
-                )}
-                <span className="flex-1 text-[15px] text-ink">{season.name}</span>
-                <span className="num text-right text-[13px] text-faint">
-                  {season.episodeCount} episodes
-                  <span className="block">{season.airDate ? season.airDate.slice(0, 4) : "TBA"}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        </Reveal>
-      )}
+    <section aria-labelledby="facts-title" className="rounded-panel bg-surface p-5 md:p-6">
+      <h2 id="facts-title" className="text-h3 font-semibold text-ink">Details</h2>
+      <dl className="num mt-4 divide-y divide-line">
+        {rows.map(([label, value]) => (
+          <div key={label} className="flex items-baseline justify-between gap-6 py-2.5">
+            <dt className="flex-none text-[14px] text-faint">{label}</dt>
+            <dd className="text-right text-[14px] text-ink">{value}</dd>
+          </div>
+        ))}
+      </dl>
     </section>
   );
 }
 
 function TitleSkeleton() {
   return (
-    <div className="md:grid md:grid-cols-[45fr_55fr]">
-      <Skeleton className="h-[60svh] w-full rounded-none md:h-[calc(100svh-64px)]" />
-      <div className="bg-paper px-5 py-12 md:px-14">
-        <Skeleton className="h-14 w-3/4" />
-        <Skeleton className="mt-4 h-4 w-1/2" />
-        <Skeleton className="mt-10 h-36 w-full rounded-lg" />
-        <SkeletonText className="mt-10" lines={4} />
+    <div aria-busy="true">
+      <Skeleton className="h-[46svh] w-full rounded-none md:h-[72svh]" />
+      <div className="page -mt-24 grid gap-8 md:grid-cols-[260px_1fr]">
+        <Skeleton className="aspect-[2/3] w-32 rounded-poster md:w-full" />
+        <div className="self-end">
+          <Skeleton className="h-16 w-3/4" />
+          <SkeletonText className="mt-6" lines={2} />
+        </div>
       </div>
     </div>
   );
@@ -302,7 +406,7 @@ function TitleSkeleton() {
 function TitleDetails({ mediaType }) {
   const { id } = useParams();
   const { region } = useRegion();
-  const [trailerOpen, setTrailerOpen] = useState(false);
+  const [video, setVideo] = useState(null);
 
   const { data: title, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["catalog", "title", mediaType, Number(id), region],
@@ -310,9 +414,7 @@ function TitleDetails({ mediaType }) {
     staleTime: 10 * 60 * 1000,
   });
 
-  // Loaded alongside the title so the actions and the reviews block share one cached state.
   const viewer = useTitleActions(title || { mediaType, id: Number(id) });
-  const stage = useStageSection(Boolean(title));
 
   useEffect(() => {
     if (title) document.title = `${title.title}${title.year ? ` (${title.year})` : ""} · Cinefile`;
@@ -326,103 +428,64 @@ function TitleDetails({ mediaType }) {
   if (isError) {
     const notFound = error?.response?.status === 404;
     return (
-      <div className="mx-auto max-w-[1440px] px-5 py-24 md:px-8">
-        <h1 className="display text-5xl">{notFound ? "We couldn't find that title" : "This page didn't load"}</h1>
-        <p className="mt-4 max-w-md text-muted">{notFound ? "It may have been removed from TMDB, or the link is wrong." : "The film archive is slow to answer right now."}</p>
+      <div className="page pb-10 pt-32">
+        <h1 className="display text-h1">{notFound ? "We couldn't find that title" : "This page didn't load"}</h1>
+        <p className="mt-4 max-w-md text-read text-muted">{notFound ? "It may have been removed from TMDB, or the link is wrong." : "The film archive is slow to answer. Try again in a moment."}</p>
         <div className="mt-8 flex gap-3">
-          {!notFound && <Button variant="primary" onClick={() => refetch()}>Try again</Button>}
-          <LinkButton to="/discover" variant="secondary">Browse instead</LinkButton>
+          {!notFound && <Button variant="primary" onClick={() => refetch()}>Try Again</Button>}
+          <LinkButton to="/discover" variant="secondary">Browse Films</LinkButton>
         </div>
       </div>
     );
   }
 
-  const lead = title.cast.find((person) => person.profilePath);
-  const images = {
-    backdrop: { kind: "backdrop", path: title.backdropPath, alt: `Still from ${title.title}` },
-    poster: { kind: "poster", path: title.posterPath, alt: `${title.title} poster` },
-    cast: lead ? { kind: "person", path: lead.profilePath, alt: `${lead.name}, who plays ${lead.character || "a lead role"}` } : null,
-  };
-
-  const meta = [
-    title.year,
-    title.mediaType === "tv" ? "Series" : formatRuntime(title.runtime),
-    title.mediaType === "tv" && title.runtime && `${title.runtime}m episodes`,
-    title.releaseInfo.certification,
-  ].filter(Boolean);
-
   return (
     <>
-      <div className="md:grid md:grid-cols-[45fr_55fr]">
-        <div className="sticky top-14 h-[60svh] md:top-16 md:h-[calc(100svh-64px)]">
-          <TitleStage images={images} stage={stage} title={title.title} />
-        </div>
+      <Hero title={title} region={region} onTrailer={() => setVideo(title.trailer)} />
 
-        <article className="relative z-10 -mt-[10svh] bg-paper px-5 pb-20 pt-10 md:mt-0 md:px-14 md:pt-16 lg:px-[72px]">
-          <div className="max-w-[620px]">
-            <header data-stage="backdrop">
-              {/* The first screen's title never waits on an animation. */}
-              <h1 className={`display max-w-[16ch] text-ink ${titleSize(title.title)}`}>{title.title}</h1>
-              {title.tagline && <p className="display mt-5 max-w-[32ch] text-[clamp(1.5rem,1.2rem+0.8vw,1.875rem)] leading-[1.15] text-ink">{title.tagline}</p>}
-              <p className="num mt-6 text-base text-muted">
-                {[...meta, title.genres.map((genre) => genre.name).join(", ")].filter(Boolean).join(" · ")}
-              </p>
-              {title.originalTitle && title.originalTitle !== title.title && (
-                <p className="mt-1 text-base text-faint">Original title: {title.originalTitle}</p>
-              )}
-              <Reveal index={2} className="mt-8 flex flex-wrap gap-3">
-                {title.trailer && (
-                  <Button variant="accent" size="lg" onClick={() => setTrailerOpen(true)}>
-                    <Play size={18} fill="currentColor" aria-hidden="true" />
-                    Play trailer
-                  </Button>
-                )}
-                <LinkButton to={`/compare?a=${title.mediaType}:${title.id}`} variant="secondary" size="lg">
-                  <Scale size={18} aria-hidden="true" />
-                  Compare
-                </LinkButton>
-              </Reveal>
-              <Reveal index={3} className="mt-8">
-                <TitleActionPanel title={title} />
-              </Reveal>
-            </header>
+      {/* Wide screens keep the side panels in one sticky column. On phones that column dissolves
+          (display: contents) so the panels can sit where they help: your take and ratings after
+          the story, details at the very end. */}
+      <div className="page mt-14 flex flex-col gap-14 lg:mt-20 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)] lg:grid-rows-[auto_1fr] lg:gap-x-12 lg:gap-y-20">
+        <Reveal as="section" aria-labelledby="story-title" className="order-1 lg:col-start-1 lg:row-start-1">
+          <h2 id="story-title" className="display text-[clamp(1.75rem,1.3rem+1.3vw,2.375rem)] text-ink">Story</h2>
+          <p className="mt-4 max-w-[68ch] text-read text-ink">{title.overview || "TMDB has no synopsis for this title yet."}</p>
+        </Reveal>
 
-            <section aria-labelledby="story-title" data-stage="backdrop" className="mt-[clamp(112px,9vw,136px)]">
-              <Reveal><SectionHeading id="story-title">Story</SectionHeading></Reveal>
-              <Reveal index={1}>
-                <p className="mt-5 text-[17px] leading-[1.65] text-ink">{title.overview || "TMDB has no synopsis for this title yet."}</p>
-              </Reveal>
-            </section>
-
-            <WhereToWatch title={title} region={region} />
-            <Ratings title={title} />
-            <Credits title={title} />
-            <Details title={title} region={region} />
-
-            <div data-stage="poster" className="mt-[clamp(112px,9vw,136px)]">
-              <TitleReviews title={title} viewerState={viewer.state} />
-            </div>
+        <aside className="contents lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:block">
+          <div className="contents lg:sticky lg:top-24 lg:block lg:space-y-4">
+            <div className="order-2"><TitleActionPanel title={title} /></div>
+            <div className="order-3 max-lg:-mt-10"><Ratings title={title} /></div>
+            <div className="order-5"><Facts title={title} region={region} /></div>
           </div>
-        </article>
+        </aside>
+
+        <div className="order-4 min-w-0 space-y-16 lg:col-start-1 lg:row-start-2 lg:space-y-20">
+          <WhereToWatch title={title} region={region} />
+          <Cast title={title} />
+          <Videos title={title} onPlay={setVideo} />
+          <Seasons tv={title.tv} />
+          <TitleReviews title={title} viewerState={viewer.state} />
+        </div>
       </div>
 
-      <div className="mx-auto mt-[clamp(96px,10vw,160px)] max-w-[1440px] space-y-14 px-4 md:px-8">
-        <PosterRow title="If you liked this" items={title.recommendations} />
-        <PosterRow title={`More like ${title.title}`} items={title.similar} />
+      <div className="section-gap space-y-20">
+        <PosterRow className="page" title="If You Liked This" items={title.recommendations} />
+        <PosterRow className="page" title={`More Like ${title.title}`} items={title.similar} />
       </div>
 
-      {title.trailer && (
-        <Dialog open={trailerOpen} onClose={() => setTrailerOpen(false)} title={title.trailer.name} size="lg" bare>
-          <div className="aspect-video w-full bg-black">
+      <Dialog open={Boolean(video)} onClose={() => setVideo(null)} title={video?.name || "Trailer"} size="lg" bare>
+        <div className="aspect-video w-full bg-black">
+          {video && (
             <iframe
-              src={`https://www.youtube-nocookie.com/embed/${title.trailer.key}?autoplay=1&rel=0`}
-              title={title.trailer.name}
+              src={`https://www.youtube-nocookie.com/embed/${video.key}?autoplay=1&rel=0`}
+              title={video.name}
               allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
               className="h-full w-full"
             />
-          </div>
-        </Dialog>
-      )}
+          )}
+        </div>
+      </Dialog>
     </>
   );
 }
