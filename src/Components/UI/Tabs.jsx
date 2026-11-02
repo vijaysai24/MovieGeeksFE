@@ -15,8 +15,8 @@ export function Tabs({ tabs, value, onChange, label, className = "", ruled = tru
               role="tab"
               aria-selected={active}
               onClick={() => onChange(tab.value)}
-              className={`relative -mb-px flex h-11 items-center gap-2 text-sm transition-colors ${
-                active ? "text-ink" : "text-faint hover:text-muted"
+              className={`relative -mb-px flex h-12 items-center gap-2 text-[15px] transition-colors ${
+                active ? "font-medium text-ink" : "text-muted can-hover:hover:text-ink"
               }`}
             >
               {tab.label}
@@ -39,8 +39,8 @@ export function LinkTabs({ tabs, label, className = "" }) {
             key={tab.to}
             to={tab.to}
             end={tab.end}
-            className={({ isActive }) => `relative -mb-px flex h-11 items-center gap-2 text-sm transition-colors ${
-              isActive ? "text-ink after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-ink" : "text-faint hover:text-muted"
+            className={({ isActive }) => `relative -mb-px flex h-12 items-center gap-2 text-[15px] transition-colors ${
+              isActive ? "font-medium text-ink after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-ink" : "text-muted can-hover:hover:text-ink"
             }`}
           >
             {tab.label}
@@ -53,7 +53,7 @@ export function LinkTabs({ tabs, label, className = "" }) {
 }
 
 export function Segmented({ options, value, onChange, label, size = "md" }) {
-  const height = size === "sm" ? "h-8 text-[13px]" : "h-9 text-sm";
+  const height = size === "sm" ? "text-[13px]" : "text-sm";
   return (
     <div role="radiogroup" aria-label={label} className="inline-flex rounded-full bg-raised p-1">
       {options.map((option) => (
@@ -64,9 +64,9 @@ export function Segmented({ options, value, onChange, label, size = "md" }) {
           aria-checked={option.value === value}
           onClick={() => onChange(option.value)}
           className={`${height} rounded-full px-3.5 transition-colors ${
-            option.value === value ? "bg-ink font-medium text-ground" : "text-muted hover:text-ink"
+            option.value === value ? "bg-ink font-medium text-ground" : "text-muted can-hover:hover:text-ink"
           }`}
-          style={{ height: size === "sm" ? 26 : 30 }}
+          style={{ height: size === "sm" ? 28 : 34 }}
         >
           {option.label}
         </button>

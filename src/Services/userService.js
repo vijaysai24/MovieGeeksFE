@@ -33,6 +33,7 @@ export const libraryApi = {
   syncWishlist: (items) => unwrap(api.post("/me/wishlist/sync", { items })),
   library: (params) => unwrap(api.get("/me/library", { params })),
   counts: () => unwrap(api.get("/me/library/counts")),
+  keys: () => unwrap(api.get("/me/library/keys")),
   wishlistItems: (params) => unwrap(api.get("/me/wishlist", { params })),
   favorites: (params) => unwrap(api.get("/me/favorites", { params })),
   ratings: (params) => unwrap(api.get("/me/ratings", { params })),
@@ -79,4 +80,50 @@ export const moderationApi = {
   details: (targetType, targetId) => unwrap(api.get(`/moderation/reports/${targetType}/${targetId}`)),
   act: (body) => unwrap(api.post("/moderation/actions", body)),
   setUserStatus: (username, status) => unwrap(api.patch(`/moderation/users/${username}`, { status })),
+};
+
+export const identityApi = {
+  stats: (year) => unwrap(api.get("/me/stats", { params: year ? { year } : {} })),
+  userStats: (username, year) => unwrap(api.get(`/users/${username}/stats`, { params: year ? { year } : {} })),
+  tasteMatch: (username) => unwrap(api.get(`/users/${username}/taste-match`)),
+  recommendations: () => unwrap(api.get("/me/recommendations")),
+  randomFromQueue: (params) => unwrap(api.get("/me/random", { params })),
+  preferences: () => unwrap(api.get("/me/preferences")),
+  setPreferences: (genres) => unwrap(api.put("/me/preferences", { genres })),
+};
+
+export const alertApi = {
+  set: (mediaType, tmdbId, type) => unwrap(api.put(`/me${titlePath(mediaType, tmdbId)}/alerts/${type}`)),
+  clear: (mediaType, tmdbId, type) => unwrap(api.delete(`/me${titlePath(mediaType, tmdbId)}/alerts/${type}`)),
+};
+
+export const collectionApi = {
+  mine: (params) => unwrap(api.get("/me/collections", { params })),
+  create: (body) => unwrap(api.post("/me/collections", body)),
+  update: (id, changes) => unwrap(api.patch(`/me/collections/${id}`, changes)),
+  remove: (id) => unwrap(api.delete(`/me/collections/${id}`)),
+  get: (id, params) => unwrap(api.get(`/collections/${id}`, { params })),
+  addItem: (id, body) => unwrap(api.post(`/me/collections/${id}/items`, body)),
+  updateItem: (id, mediaType, tmdbId, note) => unwrap(api.patch(`/me/collections/${id}/items/${mediaType}/${tmdbId}`, { note })),
+  removeItem: (id, mediaType, tmdbId) => unwrap(api.delete(`/me/collections/${id}/items/${mediaType}/${tmdbId}`)),
+  reorder: (id, items) => unwrap(api.put(`/me/collections/${id}/order`, { items })),
+  publicLists: (params) => unwrap(api.get("/collections", { params })),
+  userLists: (username, params) => unwrap(api.get(`/users/${username}/collections`, { params })),
+};
+
+export const partyApi = {
+  mine: () => unwrap(api.get("/me/parties")),
+  create: (name) => unwrap(api.post("/me/parties", { name })),
+  join: (code) => unwrap(api.post("/parties/join", { code })),
+  get: (id) => unwrap(api.get(`/parties/${id}`)),
+  rename: (id, name) => unwrap(api.patch(`/parties/${id}`, { name })),
+  remove: (id) => unwrap(api.delete(`/parties/${id}`)),
+  newInvite: (id) => unwrap(api.post(`/parties/${id}/invite`)),
+  leave: (id) => unwrap(api.delete(`/parties/${id}/members/me`)),
+  removeMember: (id, userId) => unwrap(api.delete(`/parties/${id}/members/${userId}`)),
+  suggestions: (id) => unwrap(api.get(`/parties/${id}/suggestions`)),
+  addItem: (id, mediaType, tmdbId) => unwrap(api.post(`/parties/${id}/items`, { mediaType, tmdbId })),
+  removeItem: (id, mediaType, tmdbId) => unwrap(api.delete(`/parties/${id}/items/${mediaType}/${tmdbId}`)),
+  vote: (id, mediaType, tmdbId) => unwrap(api.put(`/parties/${id}/items/${mediaType}/${tmdbId}/vote`)),
+  unvote: (id, mediaType, tmdbId) => unwrap(api.delete(`/parties/${id}/items/${mediaType}/${tmdbId}/vote`)),
 };

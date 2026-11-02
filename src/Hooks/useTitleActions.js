@@ -19,7 +19,7 @@ export const EMPTY_STATE = {
 };
 
 export const STATUS_LABELS = {
-  PLAN_TO_WATCH: "Plan to watch",
+  PLAN_TO_WATCH: "Plan to Watch",
   WATCHING: "Watching",
   WATCHED: "Watched",
 };
@@ -94,6 +94,7 @@ export function useTitleActions(title) {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["me", "library"] });
       queryClient.invalidateQueries({ queryKey: ["me", "counts"] });
+      queryClient.invalidateQueries({ queryKey: ["me", "keys"] });
       queryClient.invalidateQueries({ queryKey: ["community", title.mediaType, title.id] });
     },
   });

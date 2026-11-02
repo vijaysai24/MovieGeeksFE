@@ -1,37 +1,70 @@
 @import "tailwindcss";
 
-/* Cinefile design tokens.
-   Ground is true black; surfaces step up by lightness alone (no shadows or borders at rest).
-   Amber is the one hue: it marks data (ratings, the member score) and the page's main action,
-   never navigation or tabs. Boska sets film titles and page headings; Inter sets everything else. */
+/* Cinefile design system: "the dark room".
+   One near-black field; posters, stills and faces are the lit things in it. Surfaces step up by
+   lightness; shadows only lift what moves or floats (a hovered card, a poster resting on a
+   backdrop, a menu); gradients only ever darken a picture into the room, never decorate chrome.
+   Amber marks data and the one main action. Boska sets titles; Inter sets everything you read. */
+
+@custom-variant can-hover (@media (hover: hover) and (pointer: fine));
+
 @theme {
   --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-display: "Boska", Georgia, "Times New Roman", serif;
 
+  /* Colour roles */
   --color-ground: #000000;
-  --color-surface: #111111;
-  --color-raised: #1c1c1c;
-  --color-nested: #2a2a2a;
+  --color-surface: #0e0e0f;
+  --color-raised: #18181a;
+  --color-nested: #232326;
   --color-paper: #12100d;
-  --color-line: #1f1f1f;
-  --color-control: #444444;
+  --color-line: #1c1c1f;
+  --color-control: #3d3d42;
 
-  --color-ink: #ffffff;
-  --color-muted: #b4b4b4;
-  --color-faint: #949494;
+  --color-ink: #f5f5f4;
+  --color-muted: #b8b6b2;
+  --color-faint: #8f8d89;
 
   --color-accent: #f5b02e;
+  --color-accent-hover: #ffc14d;
   --color-accent-ink: #1b1305;
+
   --color-light: #ecebe8;
   --color-light-ink: #141414;
+  --color-light-muted: #55534f;
 
   --color-positive: #3fc07a;
-  --color-negative: #e5566f;
+  --color-negative: #ef6b7f;
 
-  --text-step-small: clamp(0.8125rem, 0.79rem + 0.1vw, 0.875rem);
-  --text-step-body: clamp(1rem, 0.96rem + 0.2vw, 1.0625rem);
-  --text-step-lead: clamp(1.25rem, 1.1rem + 0.7vw, 1.625rem);
-  --text-step-head: clamp(2rem, 1.3rem + 3.2vw, 4rem);
+  /* Type scale: five reading sizes, three display sizes */
+  --text-micro: 0.8125rem;
+  --text-micro--line-height: 1.4;
+  --text-small: 0.875rem;
+  --text-small--line-height: 1.45;
+  --text-ui: 1rem;
+  --text-ui--line-height: 1.5;
+  --text-read: 1.0625rem;
+  --text-read--line-height: 1.65;
+  --text-lead: clamp(1.1875rem, 1.05rem + 0.5vw, 1.375rem);
+  --text-lead--line-height: 1.45;
+  --text-h3: 1.25rem;
+  --text-h3--line-height: 1.3;
+  --text-h2: clamp(1.875rem, 1.35rem + 1.7vw, 2.75rem);
+  --text-h2--line-height: 1.02;
+  --text-h1: clamp(2.75rem, 1.5rem + 4.6vw, 5.25rem);
+  --text-h1--line-height: 0.95;
+  --text-hero: clamp(3.25rem, 0.6rem + 10vw, 10.5rem);
+  --text-hero--line-height: 0.86;
+
+  /* Shape */
+  --radius-poster: 8px;
+  --radius-control: 10px;
+  --radius-panel: 14px;
+
+  /* Depth: only for what lifts or floats */
+  --shadow-lift: 0 22px 44px -16px rgb(0 0 0 / 0.85), 0 0 0 1px rgb(255 255 255 / 0.04);
+  --shadow-poster: 0 30px 70px -18px rgb(0 0 0 / 0.9);
+  --shadow-float: 0 20px 48px rgb(0 0 0 / 0.7);
 
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -41,7 +74,15 @@
     background: var(--color-ground);
     color: var(--color-ink);
     -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
     color-scheme: dark;
+  }
+
+  @media (pointer: fine) {
+    html {
+      overscroll-behavior: none;
+    }
   }
 
   body {
@@ -54,6 +95,20 @@
     text-rendering: optimizeLegibility;
   }
 
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  [id] {
+    scroll-margin-top: 88px;
+  }
+
   ::selection {
     background: var(--color-accent);
     color: var(--color-accent-ink);
@@ -61,7 +116,7 @@
 
   :focus-visible {
     outline: 2px solid var(--color-ink);
-    outline-offset: 2px;
+    outline-offset: 3px;
   }
 
   img {
@@ -81,9 +136,18 @@
     cursor: pointer;
   }
 
+  select {
+    background-color: var(--color-raised);
+    color: var(--color-ink);
+  }
+
   select option {
     background: var(--color-surface);
     color: var(--color-ink);
+  }
+
+  dialog {
+    overscroll-behavior: contain;
   }
 }
 
@@ -91,12 +155,36 @@
   .display {
     font-family: var(--font-display);
     font-weight: 400;
-    letter-spacing: -0.02em;
-    line-height: 0.95;
+    letter-spacing: -0.025em;
   }
 
   .num {
     font-variant-numeric: tabular-nums;
+  }
+
+  /* One page width and one pair of gutters for every screen. */
+  .page {
+    width: 100%;
+    max-width: 1440px;
+    margin-inline: auto;
+    padding-inline: 16px;
+  }
+
+  @media (min-width: 768px) {
+    .page {
+      padding-inline: 32px;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .page {
+      padding-inline: 48px;
+    }
+  }
+
+  /* Between sections of a page, always more than any gap inside one. */
+  .section-gap {
+    margin-top: clamp(88px, 9vw, 152px);
   }
 
   .hide-scrollbar::-webkit-scrollbar {
@@ -107,22 +195,24 @@
     scrollbar-width: none;
   }
 
-  /* Ticket-stub edges for the programme sheet: shallow scallops cut into top and bottom. */
-  .scalloped {
-    --scallop-top: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='10'%3E%3Cpath d='M0 0H5A10 10 0 0 0 25 0H30V10H0Z'/%3E%3C/svg%3E");
-    --scallop-bottom: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='10'%3E%3Cpath d='M0 0H30V10H25A10 10 0 0 0 5 10H0Z'/%3E%3C/svg%3E");
-    --scallop-body: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Crect width='10' height='10'/%3E%3C/svg%3E");
-    -webkit-mask:
-      var(--scallop-top) top left / 30px 10px repeat-x,
-      var(--scallop-bottom) bottom left / 30px 10px repeat-x,
-      var(--scallop-body) center / 100% calc(100% - 20px) no-repeat;
-    mask:
-      var(--scallop-top) top left / 30px 10px repeat-x,
-      var(--scallop-bottom) bottom left / 30px 10px repeat-x,
-      var(--scallop-body) center / 100% calc(100% - 20px) no-repeat;
+  /* Pictures fade into the room: neutral darkening only, never a colour. */
+  .scrim-bottom {
+    background-image: linear-gradient(to top, var(--color-ground) 0%, rgb(0 0 0 / 0.72) 28%, rgb(0 0 0 / 0) 62%);
   }
 
-  /* Loading placeholders: flat bars at the real size of what they stand in for. */
+  .scrim-left {
+    background-image: linear-gradient(to right, rgb(0 0 0 / 0.78) 0%, rgb(0 0 0 / 0.35) 45%, rgb(0 0 0 / 0) 72%);
+  }
+
+  .scrim-top {
+    background-image: linear-gradient(to bottom, rgb(0 0 0 / 0.65) 0%, rgb(0 0 0 / 0) 100%);
+  }
+
+  .scrim-card {
+    background-image: linear-gradient(to top, rgb(0 0 0 / 0.82) 0%, rgb(0 0 0 / 0) 55%);
+  }
+
+  /* Loading placeholders: flat blocks at the real size of what they stand in for. */
   .skeleton {
     background: var(--color-raised);
     animation: skeleton-pulse 1.6s ease-in-out infinite;
