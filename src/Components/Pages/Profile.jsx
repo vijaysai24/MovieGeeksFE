@@ -11,6 +11,7 @@ import { Avatar } from "../UI/Avatar";
 import { Button, LinkButton } from "../UI/Button";
 import { Dialog } from "../UI/Dialog";
 import { Tabs } from "../UI/Tabs";
+import { Reveal } from "../UI/Reveal";
 import { Skeleton, SkeletonText } from "../UI/States";
 import { TopFiveEditor } from "../Movie/TopFiveEditor";
 import { FilmDNA } from "../Profile/FilmDNA";
@@ -164,12 +165,14 @@ function Profile() {
             <div className="flex min-w-0 flex-col gap-5 sm:flex-row sm:items-end">
               <Avatar user={user} size="hero" className="ring-4 ring-ground" />
               <div className="min-w-0">
-                {archetype && <p className="text-ui font-medium text-accent">{archetype}</p>}
-                <h1 id="profile-name" className="display mt-1 truncate text-[clamp(2.5rem,1.6rem+3vw,4.5rem)] leading-[1] text-ink">{user.name}</h1>
-                <p className="mt-2 text-ui text-muted">@{user.username} · Member since {new Date(user.createdAt).getFullYear()}</p>
+                <h1 id="profile-name" className="display truncate text-[clamp(2.5rem,1.6rem+3vw,4.5rem)] leading-[1] text-ink">{user.name}</h1>
+                <p className="mt-2 text-ui text-muted">
+                  {archetype && <><span className="font-medium text-accent">{archetype}</span> · </>}
+                  @{user.username} · Cinefile member since {new Date(user.createdAt).getFullYear()}
+                </p>
               </div>
             </div>
-            <div className="flex flex-wrap gap-3">
+            <Reveal index={1} className="flex flex-wrap gap-3">
               {profile.isSelf ? (
                 <LinkButton to="/settings" variant="secondary">Edit Profile</LinkButton>
               ) : isMember ? (
@@ -179,29 +182,30 @@ function Profile() {
               ) : (
                 <LinkButton to="/login" variant="accent">Sign In to Follow</LinkButton>
               )}
-            </div>
+            </Reveal>
           </div>
 
-          {user.bio && <p className="mt-6 max-w-[60ch] text-read text-ink">{user.bio}</p>}
+          {user.bio && <Reveal as="p" index={1} className="mt-6 max-w-[60ch] text-read text-ink">{user.bio}</Reveal>}
 
           <dl className="num mt-8 flex flex-wrap gap-x-10 gap-y-5">
-            {figures.map(([label, value, list]) => (
-              <div key={label} className="flex flex-col-reverse">
+            {figures.map(([label, value, list], index) => (
+              <Reveal key={label} index={index + 2} className="flex flex-col-reverse">
                 <dt className="mt-1.5 text-[13px] text-faint">{label}</dt>
                 <dd className="text-[1.75rem] font-semibold leading-none text-ink">
                   {list ? (
                     <button type="button" onClick={() => setConnections(list)} className="can-hover:hover:text-accent" aria-label={`${formatNumber(value)} ${label}, show list`}>{formatNumber(value)}</button>
                   ) : formatNumber(value)}
                 </dd>
-              </div>
+              </Reveal>
             ))}
           </dl>
         </div>
       </section>
 
-      <div className="sticky top-14 z-20 mt-12 bg-ground md:top-16">
+      <div className="z-20 mt-12 bg-ground md:sticky md:top-16">
         <Tabs
           className="page"
+          phoneGrid
           label="Profile sections"
           value={tab}
           onChange={selectTab}

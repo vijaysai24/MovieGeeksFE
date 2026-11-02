@@ -376,7 +376,7 @@ function Facts({ title, region }) {
   return (
     <section aria-labelledby="facts-title" className="rounded-panel bg-surface p-5 md:p-6">
       <h2 id="facts-title" className="text-h3 font-semibold text-ink">Details</h2>
-      <dl className="num mt-4 divide-y divide-line">
+      <dl className="num mt-3">
         {rows.map(([label, value]) => (
           <div key={label} className="flex items-baseline justify-between gap-6 py-2.5">
             <dt className="flex-none text-[14px] text-faint">{label}</dt>

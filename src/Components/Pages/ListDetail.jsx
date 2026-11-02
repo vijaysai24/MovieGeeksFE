@@ -244,7 +244,7 @@ function ListDetail() {
             {editing && list.isRanked && !fullyLoaded && (
               <p className="mb-4 text-[14px] text-faint">Load the whole list to change its order.</p>
             )}
-            <ol className="max-w-4xl divide-y divide-line">
+            <ol className="max-w-4xl">
               {items.map((item, index) => (
                 <ItemRow
                   key={refOf(item)}

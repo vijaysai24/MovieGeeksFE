@@ -1,13 +1,16 @@
 import { NavLink } from "react-router-dom";
 
-// Underline tabs on one full-width rule; the indicator is as wide as the label. Pages, which carry
-// no hairlines, pass ruled={false}.
-export function Tabs({ tabs, value, onChange, label, className = "", ruled = true }) {
+// Underline tabs; the indicator is as wide as the label. With phoneGrid, a long set becomes a grid of
+// pills on phones instead of a row that runs off the screen.
+export function Tabs({ tabs, value, onChange, label, className = "", phoneGrid = false }) {
   return (
-    <div className={`hide-scrollbar overflow-x-auto ${ruled ? "border-b border-line" : ""} ${className}`}>
-      <div role="tablist" aria-label={label} className="flex min-w-max gap-6">
+    <div className={`${phoneGrid ? "" : "hide-scrollbar overflow-x-auto"} ${className}`}>
+      <div role="tablist" aria-label={label} className={phoneGrid ? "grid grid-cols-3 gap-2 md:flex md:gap-6" : "flex min-w-max gap-6"}>
         {tabs.map((tab) => {
           const active = tab.value === value;
+          const pill = phoneGrid
+            ? `max-md:h-10 max-md:justify-center max-md:rounded-full max-md:px-2 max-md:text-[14px] ${active ? "max-md:bg-ink max-md:text-ground" : "max-md:bg-surface"}`
+            : "";
           return (
             <button
               key={tab.value}
@@ -15,13 +18,13 @@ export function Tabs({ tabs, value, onChange, label, className = "", ruled = tru
               role="tab"
               aria-selected={active}
               onClick={() => onChange(tab.value)}
-              className={`relative -mb-px flex h-12 items-center gap-2 text-[15px] transition-colors ${
+              className={`relative flex h-12 items-center gap-2 text-[15px] transition-colors ${pill} ${
                 active ? "font-medium text-ink" : "text-muted can-hover:hover:text-ink"
               }`}
             >
-              {tab.label}
+              <span className="truncate">{tab.label}</span>
               {tab.count !== undefined && <span className="num text-faint">{tab.count}</span>}
-              {active && <span className="absolute inset-x-0 bottom-0 h-0.5 bg-ink" aria-hidden="true" />}
+              {active && <span className={`absolute inset-x-0 bottom-0 h-0.5 bg-ink ${phoneGrid ? "max-md:hidden" : ""}`} aria-hidden="true" />}
             </button>
           );
         })}
@@ -32,7 +35,7 @@ export function Tabs({ tabs, value, onChange, label, className = "", ruled = tru
 
 export function LinkTabs({ tabs, label, className = "" }) {
   return (
-    <nav aria-label={label} className={`hide-scrollbar overflow-x-auto border-b border-line ${className}`}>
+    <nav aria-label={label} className={`hide-scrollbar overflow-x-auto ${className}`}>
       <div className="flex min-w-max gap-6">
         {tabs.map((tab) => (
           <NavLink

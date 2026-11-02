@@ -4,6 +4,7 @@ import { titleHref } from "../../Services/images";
 import { Poster } from "../Movie/PosterCard";
 import { Button } from "../UI/Button";
 import { SectionHead } from "../UI/Section";
+import { Reveal } from "../UI/Reveal";
 
 // The five titles someone picked to stand for them, numbered large. Owners see the empty slots as
 // invitations to fill.
@@ -24,9 +25,9 @@ export function TopFive({ profile, onEdit }) {
         {profile.isSelf && <Button variant="secondary" onClick={onEdit}>{five.length ? "Change Your Five" : "Choose Your Five"}</Button>}
       </SectionHead>
 
-      <ol className="hide-scrollbar -mx-4 flex snap-x gap-4 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-5 md:gap-5 md:overflow-visible md:px-0">
+      <ol className="hide-scrollbar -mx-4 flex snap-x scroll-px-4 gap-4 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-5 md:gap-5 md:overflow-visible md:px-0">
         {slots.map((title, index) => (
-          <li key={title ? `${title.mediaType}:${title.id}` : `empty-${index}`} className="w-[44vw] flex-none snap-start md:w-auto">
+          <Reveal as="li" index={index} key={title ? `${title.mediaType}:${title.id}` : `empty-${index}`} className="w-[44vw] flex-none snap-start md:w-auto">
             {title ? (
               <Link to={titleHref(title)} className="group block">
                 <span className="block overflow-hidden rounded-poster bg-raised transition-[transform,box-shadow] duration-300 can-hover:group-hover:-translate-y-1 can-hover:group-hover:shadow-lift">
@@ -51,7 +52,7 @@ export function TopFive({ profile, onEdit }) {
                 </span>
               </button>
             )}
-          </li>
+          </Reveal>
         ))}
       </ol>
     </section>

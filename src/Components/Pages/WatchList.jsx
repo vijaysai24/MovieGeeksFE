@@ -102,6 +102,7 @@ function MemberLibrary() {
       subtitle={watchedTotal === null ? " " : `${plural(watchedTotal, "title")} watched · ${plural(counts.wishlist + counts.planToWatch, "title")} waiting`}
     >
       <Tabs
+        phoneGrid
         label="Library lists"
         value={tab}
         onChange={(value) => set({ tab: value, sort: "" })}

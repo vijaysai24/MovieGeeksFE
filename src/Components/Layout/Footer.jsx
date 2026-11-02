@@ -44,19 +44,19 @@ function Footer() {
         <div className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-4">
           {COLUMNS.filter((column) => !column.member || isMember).map((column) => (
             <nav key={column.title} aria-label={column.title}>
-              <p className="text-[15px] font-medium">{column.title}</p>
+              <p className="text-ui font-semibold">{column.title}</p>
               <ul className="mt-3 space-y-2">
                 {column.links.map(([label, to]) => (
                   <li key={to}>
-                    <Link to={to} className="text-[15px] text-light-muted transition-colors can-hover:hover:text-light-ink">{label}</Link>
+                    <Link to={to} className="text-ui text-light-muted transition-colors can-hover:hover:text-light-ink">{label}</Link>
                   </li>
                 ))}
               </ul>
             </nav>
           ))}
           <div className="col-span-2 md:col-span-1">
-            <p className="text-[15px] font-medium">About the data</p>
-            <p className="mt-3 max-w-[34ch] text-[14px] leading-relaxed text-light-muted">
+            <p className="text-ui font-semibold">About the data</p>
+            <p className="mt-3 max-w-[36ch] text-ui leading-relaxed text-light-muted">
               Film and series data and images from{" "}
               <a href="https://www.themoviedb.org/" target="_blank" rel="noreferrer" className="underline underline-offset-4 can-hover:hover:text-light-ink">TMDB</a>.
               Cinefile uses the TMDB API but is not endorsed or certified by TMDB. Streaming availability by{" "}

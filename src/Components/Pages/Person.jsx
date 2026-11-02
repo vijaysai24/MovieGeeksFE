@@ -39,7 +39,7 @@ function Filmography({ credits, role }) {
   if (!credits.length) return <p className="text-[15px] text-muted">No {role} credits on TMDB.</p>;
 
   return (
-    <ol className="divide-y divide-line">
+    <ol>
       {byYear.map(([year, items]) => (
         <li key={year} className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-4 py-5 md:grid-cols-[6rem_minmax(0,1fr)]">
           <span className="num pt-1 text-ui text-faint">{year}</span>

@@ -168,7 +168,7 @@ function Party() {
             {!party.items.length ? (
               <EmptyState icon={Sparkles} title="Nothing on the shortlist yet">Add a title on the right, or pick from what’s already on everyone’s wishlists.</EmptyState>
             ) : (
-              <ol className="divide-y divide-line">
+              <ol>
                 {party.items.map((item, index) => {
                   const canRemove = party.isOwner || item.addedBy?.id === user?.id;
                   return (

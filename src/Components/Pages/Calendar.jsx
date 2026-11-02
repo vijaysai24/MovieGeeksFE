@@ -61,7 +61,7 @@ function Calendar() {
         />
       </header>
 
-      <div className="mt-10 flex flex-wrap items-center gap-3 border-b border-line pb-6">
+      <div className="mt-10 flex flex-wrap items-center gap-3">
         <IconButton label="Previous month" variant="overlay" onClick={() => set({ month: shiftMonth(month, -1) })}><ChevronLeft size={18} aria-hidden="true" /></IconButton>
         <h2 className="display min-w-[9ch] text-center text-[clamp(1.75rem,1.3rem+1.3vw,2.375rem)] text-ink" aria-live="polite">{monthLabel(month)}</h2>
         <IconButton label="Next month" variant="overlay" onClick={() => set({ month: shiftMonth(month, 1) })}><ChevronRight size={18} aria-hidden="true" /></IconButton>
@@ -77,7 +77,7 @@ function Calendar() {
           <EmptyState icon={CalendarDays} title="Nothing dated yet">TMDB has no {kindLabel} dated for {regionName(region)} this month. Try streaming, or another month.</EmptyState>
         )}
 
-        <ol className="divide-y divide-line">
+        <ol>
           {data?.days.map((day) => {
             const isToday = day.date === today;
             const date = new Date(`${day.date}T00:00:00`);

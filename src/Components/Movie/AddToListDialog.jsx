@@ -87,7 +87,7 @@ export function AddToListDialog({ title, onClose }) {
           event.preventDefault();
           if (name.trim()) create.mutate();
         }}
-        className="mt-5 border-t border-line pt-5"
+        className="mt-7"
       >
         <label htmlFor="new-list" className="text-sm font-medium text-ink">Start a new list</label>
         <div className="mt-2 flex gap-2">

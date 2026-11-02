@@ -91,7 +91,7 @@ function Comments({ review }) {
   });
 
   return (
-    <div className="mt-5 border-t border-line pt-5">
+    <div className="mt-6">
       {isLoading && <Skeleton className="h-10 w-full" />}
       {isError && <ErrorState message="Comments didn't load." onRetry={refetch} />}
       {data && !data.items.length && <p className="text-sm text-faint">No comments yet.</p>}

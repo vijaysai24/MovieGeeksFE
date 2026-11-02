@@ -83,7 +83,7 @@ function FilterGroup({ label, htmlFor, children }) {
 }
 
 // The same controls serve the desktop sidebar and the phone sheet; every change goes to the URL.
-function FilterPanel({ filters, tab, set, mediaType, region, idPrefix }) {
+function FilterPanel({ filters, tab, set, mediaType, region, idPrefix, genres }) {
   const { data: languages = [] } = useLanguages();
   const { data: providers = [] } = useProviders(mediaType, region);
   const commonLanguages = COMMON_LANGUAGES.map((code) => languages.find((language) => language.code === code)).filter(Boolean);
@@ -91,6 +91,14 @@ function FilterPanel({ filters, tab, set, mediaType, region, idPrefix }) {
 
   return (
     <div className="space-y-7">
+      {genres && (
+        <FilterGroup label="Genre" htmlFor={`${idPrefix}-genre`}>
+          <Select id={`${idPrefix}-genre`} value={filters.genres[0] || ""} onChange={(event) => set({ genre: event.target.value })} className="h-10 w-full">
+            <option value="">All genres</option>
+            {genres.map((genre) => <option key={genre.id} value={genre.id}>{genre.name}</option>)}
+          </Select>
+        </FilterGroup>
+      )}
       <FilterGroup label="Sort by" htmlFor={`${idPrefix}-sort`}>
         <Select id={`${idPrefix}-sort`} value={filters.sort || tab.base?.sort || "popularity"} onChange={(event) => set({ sort: event.target.value })} className="h-10 w-full">
           {SORTS.map((sort) => <option key={sort.value} value={sort.value}>{sort.label}</option>)}
@@ -233,7 +241,7 @@ function Discover({ preset }) {
     filters.sort && { key: "sort", label: SORTS.find((sort) => sort.value === filters.sort)?.label, clear: { sort: "" } },
   ].filter(Boolean);
   const clearAll = () => set({ genre: "", language: "", from: "", to: "", rating: "", providers: "", sort: "" });
-  const panelFilters = active.filter((item) => item.key !== "genre").length;
+  const panelFilters = active.length;
 
   return (
     <div className="page pb-10 pt-10 md:pt-14">
@@ -264,7 +272,7 @@ function Discover({ preset }) {
       {usesList ? (
         <p className="mt-6 text-[15px] text-faint">This list is curated as it is. Switch to Popular or Top Rated to filter by genre, language, year or service.</p>
       ) : (
-        <div className="hide-scrollbar -mx-4 mt-6 flex gap-2 overflow-x-auto px-4 sm:-mx-8 sm:px-8 md:mx-0 md:flex-wrap md:px-0" role="group" aria-label="Genre">
+        <div className="mt-6 hidden flex-wrap gap-2 md:flex" role="group" aria-label="Genre">
           <button
             type="button"
             aria-pressed={!filters.genres.length}
@@ -348,7 +356,7 @@ function Discover({ preset }) {
 
       {sheet && (
         <Dialog open onClose={() => setSheet(false)} title="Filters">
-          <FilterPanel filters={filters} tab={tab} set={set} mediaType={mediaType} region={region} idPrefix="sheet" />
+          <FilterPanel filters={filters} tab={tab} set={set} mediaType={mediaType} region={region} idPrefix="sheet" genres={genreOptions} />
           <div className="mt-8 flex gap-3">
             {active.length > 0 && <Button variant="ghost" onClick={clearAll}>Clear All</Button>}
             <Button variant="primary" className="ml-auto" onClick={() => setSheet(false)}>

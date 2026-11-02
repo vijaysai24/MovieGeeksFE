@@ -68,7 +68,7 @@ function Notifications() {
       {query.isSuccess && !items.length && (
         <EmptyState title="Nothing yet">When someone follows you, or likes or comments on a review, it shows up here.</EmptyState>
       )}
-      <ul className="max-w-3xl divide-y divide-line">
+      <ul className="max-w-3xl">
         {items.map((item) => (
           <li key={item.id}>
             <button type="button" onClick={() => open(item)} className="flex w-full items-center gap-4 py-3.5 text-left transition-colors can-hover:hover:bg-surface/60">

@@ -33,7 +33,7 @@ export function AccountShell({ title, subtitle, actions, children }) {
 
   return (
     <div className="mx-auto max-w-[1440px] lg:grid lg:grid-cols-[240px_minmax(0,1fr)]">
-      <aside className="hidden border-r border-line lg:block">
+      <aside className="hidden lg:block">
         <nav aria-label="Your area" className="sticky top-16 px-4 py-10">
           {user && <p className="mb-4 truncate px-3 text-[13px] text-faint">@{user.username}</p>}
           <ul className="space-y-0.5">

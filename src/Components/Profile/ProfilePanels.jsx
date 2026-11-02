@@ -15,6 +15,7 @@ import { ListFormDialog } from "../Lists/ListFormDialog";
 import { Button, LinkButton } from "../UI/Button";
 import { Select } from "../UI/Field";
 import { SectionHead } from "../UI/Section";
+import { Reveal } from "../UI/Reveal";
 import { Segmented } from "../UI/Tabs";
 import { EmptyState, ErrorState, Skeleton, SkeletonText } from "../UI/States";
 import { TopFive } from "./TopFive";
@@ -77,20 +78,20 @@ function Lately({ username, isSelf }) {
   });
 
   return (
-    <section aria-labelledby="lately-title">
+    <Reveal as="section" aria-labelledby="lately-title">
       <SectionHead id="lately-title" title="Lately" href={data?.totalRecords > 6 ? "?tab=diary" : undefined} hrefLabel="Full Diary" />
       {isLoading && <SkeletonText lines={5} />}
       {isError && <ErrorState message="The diary didn't load." onRetry={refetch} />}
       {data && !data.items.length && <p className="text-[15px] text-muted">{isSelf ? "Log a film from its page and it shows up here." : "Nothing logged yet."}</p>}
       {data?.items.length > 0 && (
-        <ul className="divide-y divide-line">
+        <ul>
           {data.items.map((entry) => (
             <li key={entry.id}>
               <Link to={titleHref(entry.title)} className="group flex items-center gap-4 py-3">
                 <span className="w-10 flex-none overflow-hidden rounded-[4px]"><Poster path={entry.title.posterPath} title={entry.title.title} sizes="40px" /></span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[15px] font-medium text-ink can-hover:group-hover:text-accent">{entry.title.title}</span>
-                  <span className="num block text-[13px] text-faint">
+                  <span className="block truncate text-ui font-medium text-ink can-hover:group-hover:text-accent">{entry.title.title}</span>
+                  <span className="num block text-[14px] text-faint">
                     {formatDate(entry.watchedOn)}{entry.isRewatch ? " · Rewatch" : ""}
                   </span>
                 </span>
@@ -100,7 +101,7 @@ function Lately({ username, isSelf }) {
           ))}
         </ul>
       )}
-    </section>
+    </Reveal>
   );
 }
 
@@ -113,9 +114,9 @@ function Activity({ username }) {
   if (!data?.items.length) return null;
 
   return (
-    <section aria-labelledby="activity-title">
+    <Reveal as="section" index={1} aria-labelledby="activity-title">
       <SectionHead id="activity-title" title="Recent Activity" />
-      <ul className="divide-y divide-line">
+      <ul>
         {data.items.map((item) => (
           <li key={item.id} className="flex items-center gap-4 py-3">
             {item.title ? (
@@ -125,18 +126,18 @@ function Activity({ username }) {
                 {item.type === "LISTED" ? <ListPlus size={16} /> : <Clapperboard size={16} />}
               </span>
             )}
-            <p className="min-w-0 flex-1 text-[15px] text-muted">
+            <p className="min-w-0 flex-1 text-ui text-muted">
               {ACTIVITY_VERBS[item.type]}{" "}
               {item.title && <Link to={titleHref(item.title)} className="font-medium text-ink can-hover:hover:text-accent">{item.title.title}</Link>}
               {item.collection && <Link to={`/lists/${item.collection.id}`} className="font-medium text-ink can-hover:hover:text-accent">{item.collection.name}</Link>}
               {item.followed && <Link to={`/u/${item.followed.username}`} className="font-medium text-ink can-hover:hover:text-accent">{item.followed.name}</Link>}
               {item.rating && <span className="num font-medium text-accent"> {item.rating}/10</span>}
             </p>
-            <span className="flex-none text-[13px] text-faint">{timeAgo(item.createdAt)}</span>
+            <span className="flex-none text-[14px] text-faint">{timeAgo(item.createdAt)}</span>
           </li>
         ))}
       </ul>
-    </section>
+    </Reveal>
   );
 }
 
@@ -167,7 +168,7 @@ function RecentReviews({ username, name, isSelf }) {
   if (!data?.items.length) return null;
 
   return (
-    <section aria-labelledby="recent-reviews-title">
+    <Reveal as="section" aria-labelledby="recent-reviews-title">
       <SectionHead
         id="recent-reviews-title"
         title={isSelf ? "Your Latest Reviews" : `${first(name)}'s Latest Reviews`}
@@ -175,7 +176,7 @@ function RecentReviews({ username, name, isSelf }) {
         hrefLabel={`All ${data.totalRecords}`}
       />
       <div className="space-y-3">{data.items.map((review) => <ReviewCard key={review.id} review={review} showTitle />)}</div>
-    </section>
+    </Reveal>
   );
 }
 
@@ -244,7 +245,7 @@ export function DiaryPanel({ username, name, isSelf }) {
         {groups.map((group) => (
           <section key={group.month} aria-label={group.month}>
             <h3 className="display text-[1.625rem] text-ink">{group.month}</h3>
-            <ul className="mt-3 divide-y divide-line">
+            <ul className="mt-3">
               {group.entries.map((entry) => (
                 <li key={entry.id}>
                   <Link to={titleHref(entry.title)} className="group grid grid-cols-[2.5rem_2.75rem_minmax(0,1fr)_auto] items-center gap-4 py-3.5 md:grid-cols-[3rem_3rem_minmax(0,1fr)_auto]">

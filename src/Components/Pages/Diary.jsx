@@ -138,7 +138,7 @@ function Diary() {
                 {monthName(month)}
                 <span className="num text-[13px] font-normal text-faint">{plural(items.length, "entry", "entries")}</span>
               </h2>
-              <ul className="mt-2 divide-y divide-line">
+              <ul className="mt-2">
                 {items.map((entry) => (
                   <li key={entry.id} className="flex items-center gap-4 py-3">
                     <span className="num w-12 flex-none text-center">

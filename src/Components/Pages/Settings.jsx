@@ -16,10 +16,10 @@ import { Tabs } from "../UI/Tabs";
 
 function Section({ title, description, children }) {
   return (
-    <section className="grid gap-4 border-b border-line py-8 first:pt-2 last:border-0 md:grid-cols-[minmax(0,320px)_minmax(0,640px)] md:gap-10">
+    <section className="grid gap-4 py-10 first:pt-2 md:grid-cols-[minmax(0,320px)_minmax(0,640px)] md:gap-10">
       <div>
-        <h2 className="text-base font-medium text-ink">{title}</h2>
-        {description && <p className="mt-1 text-sm text-muted">{description}</p>}
+        <h2 className="text-h3 font-semibold text-ink">{title}</h2>
+        {description && <p className="mt-1 text-[15px] text-muted">{description}</p>}
       </div>
       <div className="rounded-2xl bg-surface p-5">{children}</div>
     </section>
