@@ -17,7 +17,7 @@ const LINKS = [
 ];
 
 // Pages that open on a full-bleed picture; the bar starts transparent over them.
-export const HERO_ROUTES = /^\/($|movie\/|tv\/|person\/|u\/)/;
+export const HERO_ROUTES = /^\/($|movie\/|tv\/|person\/|u\/|lists\/)/;
 
 function useScrolledPast(threshold) {
   const [past, setPast] = useState(false);

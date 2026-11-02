@@ -23,15 +23,25 @@ export function Dialog({ open, onClose, title, children, size = "md", bare = fal
         if (event.target === ref.current) onClose();
       }}
       aria-label={title}
-      className={`m-auto w-[calc(100%-32px)] ${width} rounded-xl bg-surface p-0 text-ink shadow-[0_24px_64px_rgba(0,0,0,0.7)] backdrop:bg-black/75`}
+      className={`m-auto w-[calc(100%-32px)] ${width} overflow-hidden rounded-panel bg-surface p-0 text-ink shadow-float backdrop:bg-black/80`}
     >
       {open && (
-        bare ? children : (
+        bare ? (
+          <>
+            <div className="flex items-center justify-between gap-4 py-1.5 pl-5 pr-2">
+              <h2 className="truncate text-[15px] font-medium text-ink">{title}</h2>
+              <IconButton label="Close" onClick={onClose}>
+                <X size={18} aria-hidden="true" />
+              </IconButton>
+            </div>
+            {children}
+          </>
+        ) : (
           <div className="p-6 sm:p-7">
             <div className="mb-5 flex items-start justify-between gap-4">
-              <h2 className="text-xl font-semibold">{title}</h2>
+              <h2 className="text-h3 font-semibold">{title}</h2>
               <IconButton label="Close" onClick={onClose} className="-mr-2 -mt-1">
-                <X size={18} />
+                <X size={18} aria-hidden="true" />
               </IconButton>
             </div>
             {children}

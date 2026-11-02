@@ -21,6 +21,9 @@ const Settings = lazy(() => import("../Components/Pages/Settings"));
 const Calendar = lazy(() => import("../Components/Pages/Calendar"));
 const Compare = lazy(() => import("../Components/Pages/Compare"));
 const Moderation = lazy(() => import("../Components/Pages/Moderation"));
+const ListDetail = lazy(() => import("../Components/Pages/ListDetail"));
+const Parties = lazy(() => import("../Components/Pages/Parties"));
+const Party = lazy(() => import("../Components/Pages/Party"));
 const NotFound = lazy(() => import("../Components/Pages/NotFound"));
 
 function PageFallback() {
@@ -64,6 +67,9 @@ function AppRoutes() {
           <Route path="profile" element={<OwnProfile />} />
           <Route path="watchlist" element={<WatchList />} />
           <Route path="community" element={<Community />} />
+          <Route path="lists/:id" element={<ListDetail />} />
+          <Route path="parties" element={<RequireMember><Parties /></RequireMember>} />
+          <Route path="parties/:id" element={<RequireMember><Party /></RequireMember>} />
           <Route path="calendar" element={<Calendar />} />
           <Route path="compare" element={<Compare />} />
           <Route path="diary" element={<RequireMember><Diary /></RequireMember>} />

@@ -12,6 +12,7 @@ const SIZES = {
   md: "h-10 w-10 text-sm",
   lg: "h-16 w-16 text-xl",
   xl: "h-24 w-24 text-3xl",
+  hero: "h-24 w-24 text-3xl md:h-32 md:w-32 md:text-4xl",
 };
 
 // Every member keeps one stable, muted tint, so people are recognisable before their names are read.

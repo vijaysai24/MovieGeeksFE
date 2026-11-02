@@ -1,6 +1,6 @@
 import { useId } from "react";
 
-const surface = "rounded-lg bg-raised px-3.5 text-[15px] text-ink placeholder:text-faint ring-1 ring-inset ring-transparent transition-shadow hover:ring-control focus:outline-none focus:ring-ink/70";
+const surface = "rounded-control bg-raised px-3.5 text-[15px] text-ink placeholder:text-faint ring-1 ring-inset ring-transparent transition-shadow can-hover:hover:ring-control focus:outline-none focus:ring-ink/70";
 const control = `w-full ${surface}`;
 
 // Label above the field; any limit the field enforces is stated beside it, tied by aria-describedby.
@@ -11,7 +11,7 @@ export function Field({ label, hint, error, children, className = "" }) {
 
   return (
     <div className={className}>
-      <label htmlFor={id} className="mb-2 block text-sm font-medium text-ink">{label}</label>
+      <label htmlFor={id} className="mb-2 block text-[15px] font-medium text-ink">{label}</label>
       {children({ id, "aria-describedby": hintId, "aria-invalid": error ? true : undefined })}
       {(hint || error) && (
         <p id={hintId} className={`mt-2 text-[13px] ${error ? "text-negative" : "text-faint"}`}>{error || hint}</p>
